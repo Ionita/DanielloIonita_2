@@ -14,6 +14,12 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -44,7 +50,6 @@ public class KafkaController implements Serializer {
     }
 
 
-    // TODO GUARDA COME NON INVIARE SOLO IN LOCALHOST
     public void sendMessage(String address, Message m, String topic) {
 
         long time = System.currentTimeMillis();
@@ -113,6 +118,31 @@ public class KafkaController implements Serializer {
     @Override
     public void close() {
 
+    }
+
+    public void readData () throws IOException {
+        String csvFile = "/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat";
+        String line = "";
+        String cvsSplitBy = "|";
+
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+
+            int i = 0;
+            while ((line = br.readLine()) != null) {
+
+                // use comma as separator
+                String[] country = line.split(cvsSplitBy);
+                i++;
+
+                if(i == 100) {
+                    System.out.println(country[0]);
+                    i = 0;
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
