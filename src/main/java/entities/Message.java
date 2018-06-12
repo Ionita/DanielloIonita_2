@@ -9,12 +9,29 @@ public class Message implements Serializable {
     private String tmp;
     private Integer user_id1;
     private String user_name;
-    private Integer comment_id;
+    private Long comment_id;
     private String comment;
     private Integer post_id;
     private String post;
     private Integer user_id2;
+    private Long comment_replied;
+    private Integer post_commented;
 
+    public Long getComment_replied() {
+        return comment_replied;
+    }
+
+    public void setComment_replied(Long comment_replied) {
+        this.comment_replied = comment_replied;
+    }
+
+    public Integer getPost_commented() {
+        return post_commented;
+    }
+
+    public void setPost_commented(Integer post_commented) {
+        this.post_commented = post_commented;
+    }
 
     public Message (Integer type){
         this.type = type;
@@ -52,11 +69,11 @@ public class Message implements Serializable {
         this.user_name = user_name;
     }
 
-    public Integer getComment_id() {
+    public Long getComment_id() {
         return comment_id;
     }
 
-    public void setComment_id(Integer comment_id) {
+    public void setComment_id(Long comment_id) {
         this.comment_id = comment_id;
     }
 

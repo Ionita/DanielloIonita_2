@@ -20,13 +20,13 @@ public class Runner {
 
         Thread thread2 = new Thread(() -> {
             try {
-                kc.readData();
+                kc.kafkaStart();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
 
-        thread1.start();
+        //thread1.start();
         thread2.start();
 
     }

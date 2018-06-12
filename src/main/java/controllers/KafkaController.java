@@ -8,6 +8,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.protocol.types.Field;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -21,6 +22,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -28,6 +31,7 @@ import java.util.concurrent.ExecutionException;
 
 public class KafkaController implements Serializer {
     final Producer<Long, String> producer;
+    private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     public KafkaController(){
         producer = createProducer();
@@ -121,8 +125,27 @@ public class KafkaController implements Serializer {
 
     }
 
-    public void readData () throws IOException {
-        String csvFile = "/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat";
+    public void kafkaStart() {
+
+        Thread thread1 = new Thread(() -> {
+            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
+        });
+
+        Thread thread2 = new Thread(() -> {
+            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/posts.dat", 1);
+        });
+
+        Thread thread3 = new Thread(() -> {
+            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
+        });
+        thread1.start();
+        thread2.start();
+        thread3.start();
+
+    }
+
+    public void readData (String filepath, Integer type) {
+        String csvFile = filepath;
         String line;
         String cvsSplitBy = "\\|";
 
@@ -130,21 +153,50 @@ public class KafkaController implements Serializer {
 
             while ((line = br.readLine()) != null) {
 
+                String[] bufferReading = line.split(cvsSplitBy, -1);
+
                 try {
                     // use comma as separator
-                    String[] bufferReading = line.split(cvsSplitBy);
 
-                    Message m = new Message(0);
-                    //m.setTmp(Timestamp.valueOf(bufferReading[0]));
-                    m.setUser_id1(Integer.valueOf(bufferReading[1]));
-                    m.setUser_id2(Integer.valueOf(bufferReading[2]));
+                    Message m = new Message(type);
+
+                    if (type == 0) {
+                        //TODO: remember di reject doble freidnship dude, indian style... jei oh --\_\--   --/_/--
+                        m.setTmp(bufferReading[0]);
+                        m.setUser_id1(Integer.valueOf(bufferReading[1]));
+                        m.setUser_id2(Integer.valueOf(bufferReading[2]));
+                    }
+                    else if (type == 1) {
+                        m.setTmp(bufferReading[0]);
+                        m.setPost_id(Integer.valueOf(bufferReading[1]));
+                        m.setUser_id1(Integer.valueOf(bufferReading[2]));
+                        m.setPost(bufferReading[3]);
+                        m.setUser_name(bufferReading[4]);
+                    }
+
+                    else {
+                        m.setTmp(bufferReading[0]);
+                        m.setComment_id(Long.valueOf(bufferReading[1]));
+                        m.setUser_id1(Integer.valueOf(bufferReading[2]));
+                        m.setComment(bufferReading[3]);
+                        m.setUser_name(bufferReading[4]);
+                        if (bufferReading[5].equals("") || bufferReading[5] == null || bufferReading[5].equals(" "))
+                            m.setComment_replied(null);
+                        else
+                            m.setComment_replied(Long.valueOf(bufferReading[5]));
+
+                        if (bufferReading[6].equals("") || bufferReading[6] == null || bufferReading[6].equals(" "))
+                            m.setPost_commented(null);
+                        else
+                            m.setPost_commented(Integer.valueOf(bufferReading[6]));
+                    }
 
                     this.sendMessage("localhost", m, "friendshipTopic");
 
                     //System.out.println("send");
                 }
                 catch (Exception e){
-                    //System.out.println("not sending");
+                    checkErrors(bufferReading, type);
                 }
             }
 
@@ -153,4 +205,74 @@ public class KafkaController implements Serializer {
         }
     }
 
+    public static void checkErrors (String[] buffer, Integer type) {
+
+        if (type == 0) {
+            if (buffer.length != 3)
+                printBuffer("Errore numero elementi in friendship", buffer);
+
+            try {
+                new SimpleDateFormat(dateFormat).parse(String.valueOf(buffer[0]));
+            } catch (ParseException e) {
+                printBuffer("Il primo non è un timestamp", buffer);
+            }
+
+            try {
+                Integer.valueOf(buffer[1]);
+                Integer.valueOf(buffer[2]);
+            } catch (Exception e) {
+                printBuffer("non essere integro 0" , buffer);
+            }
+        }
+
+        else if (type == 1) {
+
+            if (buffer.length != 5)
+                printBuffer("Errore numero elementi in posts" , buffer);
+
+            try {
+                new SimpleDateFormat(dateFormat).parse(String.valueOf(buffer[0]));
+            } catch (ParseException e) {
+                printBuffer("Il primo non è un timestamp" , buffer);
+            }
+
+            try {
+                Integer.valueOf(buffer[1]);
+                Integer.valueOf(buffer[2]);
+            } catch (Exception e) {
+                printBuffer("non essere integro 1" , buffer);
+            }
+
+        }
+
+        else {
+            if (buffer.length != 7)
+                printBuffer("Errore numero elementi in comments" , buffer);
+
+            try {
+                new SimpleDateFormat(dateFormat).parse(String.valueOf(buffer[0]));
+            } catch (ParseException e) {
+                printBuffer("Il primo non è un timestamp" , buffer);
+            }
+
+            try {
+                Integer.valueOf(buffer[1]);
+                Integer.valueOf(buffer[2]);
+                Integer.valueOf(buffer[5]);
+                Integer.valueOf(buffer[6]);
+            } catch (Exception e) {
+                printBuffer("non essere integro 2" , buffer);
+            }
+        }
+    }
+
+    public static void printBuffer (String comment, String[] buffer) {
+
+        System.out.println(comment);
+        for (String s:buffer) {
+            System.out.print(s + " * ");
+        }
+        System.out.println();
+
+    }
 }
