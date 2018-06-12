@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -121,22 +122,29 @@ public class KafkaController implements Serializer {
     }
 
     public void readData () throws IOException {
-        String csvFile = "/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat";
-        String line = "";
-        String cvsSplitBy = "|";
+        String csvFile = "/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat";
+        String line;
+        String cvsSplitBy = "\\|";
 
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
 
-            int i = 0;
             while ((line = br.readLine()) != null) {
 
-                // use comma as separator
-                String[] country = line.split(cvsSplitBy);
-                i++;
+                try {
+                    // use comma as separator
+                    String[] bufferReading = line.split(cvsSplitBy);
 
-                if(i == 100) {
-                    System.out.println(country[0]);
-                    i = 0;
+                    Message m = new Message(0);
+                    //m.setTmp(Timestamp.valueOf(bufferReading[0]));
+                    m.setUser_id1(Integer.valueOf(bufferReading[1]));
+                    m.setUser_id2(Integer.valueOf(bufferReading[2]));
+
+                    this.sendMessage("localhost", m, "friendshipTopic");
+
+                    //System.out.println("send");
+                }
+                catch (Exception e){
+                    //System.out.println("not sending");
                 }
             }
 

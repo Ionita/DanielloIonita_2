@@ -6,8 +6,8 @@ import java.sql.Timestamp;
 public class Message implements Serializable {
 
     private Integer type;
-    private Timestamp tmp;
-    private Integer user_id;
+    private String tmp;
+    private Integer user_id1;
     private String user_name;
     private Integer comment_id;
     private String comment;
@@ -28,20 +28,20 @@ public class Message implements Serializable {
         this.type = type;
     }
 
-    public Timestamp getTmp() {
+    public String getTmp() {
         return tmp;
     }
 
-    public void setTmp(Timestamp tmp) {
+    public void setTmp(String tmp) {
         this.tmp = tmp;
     }
 
-    public Integer getUser_id() {
-        return user_id;
+    public Integer getUser_id1() {
+        return user_id1;
     }
 
-    public void setUser_id(Integer user_id) {
-        this.user_id = user_id;
+    public void setUser_id1(Integer user_id) {
+        this.user_id1 = user_id;
     }
 
     public String getUser_name() {
