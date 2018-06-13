@@ -175,11 +175,32 @@ public class KafkaController implements Serializer {
                     }
 
                     else {
-                        m.setTmp(bufferReading[0]);
-                        m.setComment_id(Long.valueOf(bufferReading[1]));
-                        m.setUser_id1(Integer.valueOf(bufferReading[2]));
-                        m.setComment(bufferReading[3]);
-                        m.setUser_name(bufferReading[4]);
+                        if (bufferReading[0].equals("") || bufferReading[0] == null || bufferReading[0].equals(" "))
+                            m.setTmp(null);
+                        else
+                            m.setTmp(bufferReading[0]);
+
+                        if (bufferReading[1].equals("") || bufferReading[1] == null || bufferReading[1].equals(" "))
+                            m.setComment_id(null);
+                        else
+                            m.setComment_id(Long.valueOf(bufferReading[1]));
+
+                        if (bufferReading[2].equals("") || bufferReading[2] == null || bufferReading[2].equals(" "))
+                            m.setUser_id1(null);
+                        else
+                            m.setUser_id1(Integer.valueOf(bufferReading[2]));
+
+                        if (bufferReading[3].equals("") || bufferReading[3] == null || bufferReading[3].equals(" "))
+                            m.setComment(null);
+
+                        else
+                            m.setComment(bufferReading[3]);
+
+                        if (bufferReading[4].equals("") || bufferReading[4] == null || bufferReading[4].equals(" "))
+                            m.setUser_name(null);
+                        else
+                            m.setUser_name(bufferReading[4]);
+
                         if (bufferReading[5].equals("") || bufferReading[5] == null || bufferReading[5].equals(" "))
                             m.setComment_replied(null);
                         else
