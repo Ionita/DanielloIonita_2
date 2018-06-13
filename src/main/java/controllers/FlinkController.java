@@ -7,6 +7,8 @@ import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -15,8 +17,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
 import org.apache.flink.util.Collector;
-import scala.Tuple2;
-import scala.Tuple3;
+
 
 
 import java.util.ArrayList;
@@ -44,22 +45,13 @@ public class FlinkController {
         DataStream<Tuple3<String, Integer, Integer>> streamTuples = stream.flatMap(new SemaphoreJson2Tuple());
 
         SingleOutputStreamOperator<Double> averageSpeedStream = streamTuples
-                .keyBy(new int[]{0})
+                .keyBy(0)
                 .timeWindow(Time.seconds((long)10))
                 .aggregate(new AverageAggregate());
 
 
 
-        streamTuples.addSink(new FlinkKafkaProducer011<>("localhost:9092", INPUT_KAFKA_TOPIC,  stringDoubleTuple3 -> {
-            /*Gson gson = new Gson();
-            String key = stringDoubleTuple3.f0;
-            double value = stringDoubleTuple3.f1;
-            int count = stringDoubleTuple3.f2;
-            FlinkResult flinkResult = new FlinkResult(key, value, count);
-            Message m = new Message(flinkDispatcherID, 70115);
-            m.setFlinkResult(flinkResult);
-            String result = gson.toJson(m);
-            return result.getBytes();*/
+        averageSpeedStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", INPUT_KAFKA_TOPIC,  stringDoubleTuple3 -> {
             return null;
         }));
 
@@ -69,7 +61,6 @@ public class FlinkController {
         //        .keyBy(1)
         //        .timeWindow(org.apache.flink.streaming.api.windowing.time.Time.milliseconds(60))
         //        .aggregate(new AverageAggregate());
-
 
         env.execute("Window Traffic Data");
 
@@ -93,17 +84,17 @@ public class FlinkController {
         @Override
         public Tuple2<Integer, Integer> add(Tuple3<String, Integer, Integer> value, Tuple2<Integer, Integer> accumulator) {
             System.out.println("ricevuto");
-            return new Tuple2<>(accumulator._1, accumulator._2 + 1);
+            return new Tuple2<>(accumulator.f0, accumulator.f1 + 1);
         }
 
         @Override
         public Double getResult(Tuple2<Integer, Integer> accumulator) {
             //return accumulator.f0 / accumulator.f1;        }
-            return accumulator._2.doubleValue();        }
+            return accumulator.f1.doubleValue();        }
 
         @Override
         public Tuple2<Integer, Integer> merge(Tuple2<Integer, Integer> a, Tuple2<Integer, Integer> b) {
-            return new Tuple2<>(a._1 + b._1, a._2 + b._2);
+            return new Tuple2<>(a.f0 + b.f0, a.f1 + b.f1);
         }
     }
 
