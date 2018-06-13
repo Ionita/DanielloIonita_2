@@ -22,8 +22,8 @@ public class DataReader {
         if (element.isJsonObject()) {
             JsonObject jsonRecord = element.getAsJsonObject();
             Friend data = new Friend();
-            data.setUser_1(jsonRecord.get("user_id1").getAsInt());
-            data.setUser_2(jsonRecord.get("user_id2").getAsInt());
+            data.setUser_1(jsonRecord.get("user_id1").getAsLong());
+            data.setUser_2(jsonRecord.get("user_id2").getAsLong());
 
             messages.add(data);
         } else {

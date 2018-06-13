@@ -4,12 +4,12 @@ import java.sql.Timestamp;
 
 public class Comment {
     private Timestamp tmp;
-    private Integer comment_id;
-    private Integer user_id;
+    private Long comment_id;
+    private Long user_id;
     private String comment;
     private String user_name;
-    private Integer comment_replied;
-    private Integer post_commented;
+    private Long comment_replied;
+    private Long post_commented;
 
     public Timestamp getTmp() {
         return tmp;
@@ -19,19 +19,19 @@ public class Comment {
         this.tmp = tmp;
     }
 
-    public Integer getComment_id() {
+    public Long getComment_id() {
         return comment_id;
     }
 
-    public void setComment_id(Integer comment_id) {
+    public void setComment_id(Long comment_id) {
         this.comment_id = comment_id;
     }
 
-    public Integer getUser_id() {
+    public Long getUser_id() {
         return user_id;
     }
 
-    public void setUser_id(Integer user_id) {
+    public void setUser_id(Long user_id) {
         this.user_id = user_id;
     }
 
@@ -51,19 +51,19 @@ public class Comment {
         this.user_name = user_name;
     }
 
-    public Integer getComment_replied() {
+    public Long getComment_replied() {
         return comment_replied;
     }
 
-    public void setComment_replied(Integer comment_replied) {
+    public void setComment_replied(Long comment_replied) {
         this.comment_replied = comment_replied;
     }
 
-    public Integer getPost_commented() {
+    public Long getPost_commented() {
         return post_commented;
     }
 
-    public void setPost_commented(Integer post_commented) {
+    public void setPost_commented(Long post_commented) {
         this.post_commented = post_commented;
     }
 }

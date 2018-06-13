@@ -8,20 +8,14 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.protocol.types.Field;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
@@ -30,6 +24,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class KafkaController implements Serializer {
+
+    private int i=0;
+    private int j=1;
     final Producer<Long, String> producer;
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
@@ -163,57 +160,40 @@ public class KafkaController implements Serializer {
                     if (type == 0) {
                         //TODO: remember di reject doble freidnship dude, indian style... jei oh --\_\--   --/_/--
                         m.setTmp(bufferReading[0]);
-                        m.setUser_id1(Integer.valueOf(bufferReading[1]));
-                        m.setUser_id2(Integer.valueOf(bufferReading[2]));
+                        m.setUser_id1(Long.valueOf(bufferReading[1]));
+                        m.setUser_id2(Long.valueOf(bufferReading[2]));
                     }
                     else if (type == 1) {
                         m.setTmp(bufferReading[0]);
-                        m.setPost_id(Integer.valueOf(bufferReading[1]));
-                        m.setUser_id1(Integer.valueOf(bufferReading[2]));
+                        m.setPost_id(Long.valueOf(bufferReading[1]));
+                        m.setUser_id1(Long.valueOf(bufferReading[2]));
                         m.setPost(bufferReading[3]);
                         m.setUser_name(bufferReading[4]);
                     }
 
                     else {
-                        if (bufferReading[0].equals("") || bufferReading[0] == null || bufferReading[0].equals(" "))
-                            m.setTmp(null);
-                        else
-                            m.setTmp(bufferReading[0]);
-
-                        if (bufferReading[1].equals("") || bufferReading[1] == null || bufferReading[1].equals(" "))
-                            m.setComment_id(null);
-                        else
-                            m.setComment_id(Long.valueOf(bufferReading[1]));
-
-                        if (bufferReading[2].equals("") || bufferReading[2] == null || bufferReading[2].equals(" "))
-                            m.setUser_id1(null);
-                        else
-                            m.setUser_id1(Integer.valueOf(bufferReading[2]));
-
-                        if (bufferReading[3].equals("") || bufferReading[3] == null || bufferReading[3].equals(" "))
-                            m.setComment(null);
-
-                        else
-                            m.setComment(bufferReading[3]);
-
-                        if (bufferReading[4].equals("") || bufferReading[4] == null || bufferReading[4].equals(" "))
-                            m.setUser_name(null);
-                        else
-                            m.setUser_name(bufferReading[4]);
-
-                        if (bufferReading[5].equals("") || bufferReading[5] == null || bufferReading[5].equals(" "))
+                        m.setTmp(bufferReading[0]);
+                        m.setComment_id(Long.valueOf(bufferReading[1]));
+                        m.setUser_id1(Long.valueOf(bufferReading[2]));
+                        m.setComment(bufferReading[3]);
+                        m.setUser_name(bufferReading[4]);
+                        if (bufferReading[5].equals("") || bufferReading[5].equals(null) || bufferReading[5].equals(" ")) {
                             m.setComment_replied(null);
-                        else
+                            m.setPost_commented(Long.valueOf(bufferReading[6]));
+                        }
+                        else {
                             m.setComment_replied(Long.valueOf(bufferReading[5]));
-
-                        if (bufferReading[6].equals("") || bufferReading[6] == null || bufferReading[6].equals(" "))
                             m.setPost_commented(null);
-                        else
-                            m.setPost_commented(Integer.valueOf(bufferReading[6]));
+                        }
                     }
 
+                    i++;
                     this.sendMessage("localhost", m, "friendshipTopic");
-
+                    if (i>2000) {
+                        System.out.println("\n\n\n" + (i*j) + "\n\n\n");
+                        i=0;
+                        j++;
+                    }
                     //System.out.println("send");
                 }
                 catch (Exception e){
@@ -227,6 +207,11 @@ public class KafkaController implements Serializer {
     }
 
     public static void checkErrors (String[] buffer, Integer type) {
+
+        for (String s:buffer){
+            if (!consistencyCheck(s))
+                System.out.println("Riga non consistente");
+        }
 
         if (type == 0) {
             if (buffer.length != 3)
@@ -295,5 +280,10 @@ public class KafkaController implements Serializer {
         }
         System.out.println();
 
+    }
+
+    public static boolean consistencyCheck(String s) {
+
+        return !s.equals("") && s != null && !s.equals(" ");
     }
 }

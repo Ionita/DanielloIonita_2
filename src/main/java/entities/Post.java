@@ -4,8 +4,8 @@ import java.sql.Timestamp;
 
 public class Post {
     private Timestamp tmp;
-    private Integer post_id;
-    private Integer user_id;
+    private Long post_id;
+    private Long user_id;
     private String post;
     private String user_name;
 
@@ -17,19 +17,19 @@ public class Post {
         this.tmp = tmp;
     }
 
-    public Integer getPost_id() {
+    public Long getPost_id() {
         return post_id;
     }
 
-    public void setPost_id(Integer post_id) {
+    public void setPost_id(Long post_id) {
         this.post_id = post_id;
     }
 
-    public Integer getUser_id() {
+    public Long getUser_id() {
         return user_id;
     }
 
-    public void setUser_id(Integer user_id) {
+    public void setUser_id(Long user_id) {
         this.user_id = user_id;
     }
 
