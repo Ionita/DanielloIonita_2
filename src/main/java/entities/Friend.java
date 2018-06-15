@@ -1,18 +1,18 @@
 package entities;
 
-import java.sql.Timestamp;
+import java.util.Date;
 
 public class Friend {
-    private Timestamp tmp;
+    private Date tmp;
     private Long user_1;
     private Long user_2;
 
 
-    public Timestamp getTmp() {
+    public Date getTmp() {
         return tmp;
     }
 
-    public void setTmp(Timestamp tmp) {
+    public void setTmp(Date tmp) {
         this.tmp = tmp;
     }
 

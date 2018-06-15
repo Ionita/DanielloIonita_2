@@ -188,7 +188,7 @@ public class KafkaController implements Serializer {
                     }
 
                     i++;
-                    this.sendMessage("localhost", m, "friendshipTopic");
+                    this.sendMessage("localhost", m, "test");
                     if (i>2000) {
                         System.out.println("\n\n\n" + (i*j) + "\n\n\n");
                         i=0;
