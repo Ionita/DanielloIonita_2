@@ -11,7 +11,6 @@ public class Friend {
 
     private Integer hour;
     private Integer day;
-    private Integer week;
     private Integer month;
     private Integer year;
 
@@ -26,7 +25,7 @@ public class Friend {
         Calendar c = GregorianCalendar.getInstance();
         c.setTime(tmp);
         setHour(c.get(Calendar.HOUR_OF_DAY));
-        setDay(c.get(Calendar.WEEK_OF_MONTH));
+        setDay(c.get(Calendar.DAY_OF_MONTH));
         setMonth(c.get(Calendar.MONTH));
         setYear(c.get(Calendar.YEAR));
 
@@ -65,15 +64,7 @@ public class Friend {
     public void setMonth(Integer month) {
         this.month = month;
     }
-
-    public Integer getWeek() {
-        return week;
-    }
-
-    public void setWeek(Integer week) {
-        this.week = week;
-    }
-
+    
     public Integer getDay() {
         return day;
     }

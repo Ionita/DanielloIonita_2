@@ -16,6 +16,8 @@ public class Message implements Serializable {
     private Long comment_replied;
     private Long post_commented;
 
+    public Message(){}
+
     public Long getComment_replied() {
         return comment_replied;
     }

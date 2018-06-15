@@ -1,5 +1,6 @@
 import controllers.FlinkController;
 import controllers.KafkaController;
+import controllers.Monitor;
 
 
 public class Runner {
@@ -25,6 +26,9 @@ public class Runner {
             }
         });
 
+        Thread thread3 = new Thread(Monitor::new);
+
+        thread3.start();
         thread1.start();
         thread2.start();
 

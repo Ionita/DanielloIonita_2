@@ -40,7 +40,7 @@ public class FlinkController {
 
         SingleOutputStreamOperator<Double> averageSpeedStream = streamTuples
                 .keyBy(0)
-                .timeWindow(Time.seconds((long)10))
+                .timeWindow(Time.seconds((long)5))
                 .aggregate(new AverageAggregate());
 
 
