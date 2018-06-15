@@ -1,7 +1,6 @@
 import controllers.FlinkController;
 import controllers.KafkaController;
 
-import java.io.IOException;
 
 public class Runner {
 

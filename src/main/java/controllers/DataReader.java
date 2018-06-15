@@ -5,8 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import entities.Friend;
 
-import java.util.Date;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,15 +17,11 @@ public class DataReader {
 
     public static ArrayList<Friend> getData(String jsonString){
 
-
         ArrayList<Friend> messages = new ArrayList<>();
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonString);
 
         if (element.isJsonObject()) {
-/*
-            System.out.println(element + "\n\n\n\n");
-*/
             try {
                 JsonObject jsonRecord = element.getAsJsonObject();
                 Friend data = new Friend();

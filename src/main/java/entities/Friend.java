@@ -8,7 +8,12 @@ public class Friend {
     private Date tmp;
     private Long user_1;
     private Long user_2;
+
     private Integer hour;
+    private Integer day;
+    private Integer week;
+    private Integer month;
+    private Integer year;
 
 
     public Date getTmp() {
@@ -16,10 +21,15 @@ public class Friend {
     }
 
     public void setTmp(Date tmp) {
+
         this.tmp = tmp;
         Calendar c = GregorianCalendar.getInstance();
         c.setTime(tmp);
         setHour(c.get(Calendar.HOUR_OF_DAY));
+        setDay(c.get(Calendar.WEEK_OF_MONTH));
+        setMonth(c.get(Calendar.MONTH));
+        setYear(c.get(Calendar.YEAR));
+
     }
 
 
@@ -46,5 +56,37 @@ public class Friend {
 
     public void setHour(Integer hour) {
         this.hour = hour;
+    }
+
+    public Integer getMonth() {
+        return month;
+    }
+
+    public void setMonth(Integer month) {
+        this.month = month;
+    }
+
+    public Integer getWeek() {
+        return week;
+    }
+
+    public void setWeek(Integer week) {
+        this.week = week;
+    }
+
+    public Integer getDay() {
+        return day;
+    }
+
+    public void setDay(Integer day) {
+        this.day = day;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
     }
 }
