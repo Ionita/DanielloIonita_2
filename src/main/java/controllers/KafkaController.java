@@ -136,8 +136,8 @@ public class KafkaController implements Serializer {
             readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
         });
         thread1.start();
-        thread2.start();
-        thread3.start();
+        //thread2.start();
+        //thread3.start();
 
     }
 

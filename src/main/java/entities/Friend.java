@@ -7,6 +7,7 @@ public class Friend {
     private Long user_1;
     private Long user_2;
 
+
     public Timestamp getTmp() {
         return tmp;
     }
