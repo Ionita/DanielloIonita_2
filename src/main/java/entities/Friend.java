@@ -1,11 +1,14 @@
 package entities;
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class Friend {
     private Date tmp;
     private Long user_1;
     private Long user_2;
+    private Integer hour;
 
 
     public Date getTmp() {
@@ -14,6 +17,9 @@ public class Friend {
 
     public void setTmp(Date tmp) {
         this.tmp = tmp;
+        Calendar c = GregorianCalendar.getInstance();
+        c.setTime(tmp);
+        setHour(c.get(Calendar.HOUR_OF_DAY));
     }
 
 
@@ -32,5 +38,13 @@ public class Friend {
 
     public void setUser_2(Long user_2) {
         this.user_2 = user_2;
+    }
+
+    public Integer getHour() {
+        return hour;
+    }
+
+    public void setHour(Integer hour) {
+        this.hour = hour;
     }
 }
