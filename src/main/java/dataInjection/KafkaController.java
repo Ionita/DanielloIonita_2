@@ -1,4 +1,4 @@
-package controllers;
+package dataInjection;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,9 +13,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import org.apache.kafka.common.serialization.Serializer;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+
+import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
@@ -25,9 +24,7 @@ import java.util.concurrent.ExecutionException;
 
 public class KafkaController implements Serializer {
 
-    private int i=0;
-    private int j=1;
-    final Producer<Long, String> producer;
+    private final Producer<Long, String> producer;
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     public KafkaController(){
@@ -52,7 +49,7 @@ public class KafkaController implements Serializer {
     }
 
 
-    public void sendMessage(String address, Message m, String topic) {
+    private void sendMessage(Message m, String topic) {
 
         long time = System.currentTimeMillis();
 
@@ -65,9 +62,6 @@ public class KafkaController implements Serializer {
             producer.send(record).get();
         } catch (JsonProcessingException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } finally {
-//            producer.flush();
-//            producer.close();
         }
     }
 
@@ -90,28 +84,6 @@ public class KafkaController implements Serializer {
         return retVal;
     }
 
-    public void sendSemaphoreSensorInfo(String address, Object s, String topic) {
-
-        try {
-
-            ObjectMapper mapper = new ObjectMapper();
-
-            String toSend =  mapper.writeValueAsString(s);
-            System.out.println(toSend);
-            final ProducerRecord<Long, String> record =
-                    new ProducerRecord<>(topic, toSend);
-
-            producer.send(record).get();
-
-        } catch (JsonProcessingException | InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        } finally {
-//            producer.flush();
-//            producer.close();
-        }
-    }
-
-
 
     @Override
     public void close() {
@@ -119,30 +91,44 @@ public class KafkaController implements Serializer {
     }
 
     public void kafkaStart() {
+        KafkaBenchmark.getInstance().startTime();
+        KafkaBenchmark.getInstance().startThread();
 
         Thread thread1 = new Thread(() -> {
-            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
+            readData("/home/simone/IdeaProjects/DanielloIonita_2/data/friendships.dat", 0);
         });
 
         Thread thread2 = new Thread(() -> {
-            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/posts.dat", 1);
+            readData("/home/simone/IdeaProjects/DanielloIonita_2/data/posts.dat", 1);
         });
 
         Thread thread3 = new Thread(() -> {
-            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
+            readData("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat", 2);
         });
+
         thread1.start();
         //thread2.start();
         //thread3.start();
 
+        try {
+            thread1.join();
+//            thread2.join();
+//            thread3.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        KafkaBenchmark.getInstance().stopAll();
+
     }
 
-    public void readData (String filepath, Integer type) {
-        String csvFile = filepath;
+    private void readData(String filepath, Integer type) {
+        int i=0;
+        int j = 1;
         String line;
         String cvsSplitBy = "\\|";
 
-        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
 
             while ((line = br.readLine()) != null) {
 
@@ -173,7 +159,7 @@ public class KafkaController implements Serializer {
                         m.setUser_id1(Long.valueOf(bufferReading[2]));
                         m.setComment(bufferReading[3]);
                         m.setUser_name(bufferReading[4]);
-                        if (bufferReading[5].equals("") || bufferReading[5].equals(null) || bufferReading[5].equals(" ")) {
+                        if (bufferReading[5].equals("") || bufferReading[5].equals(" ")) {
                             m.setComment_replied(null);
                             m.setPost_commented(Long.valueOf(bufferReading[6]));
                         }
@@ -184,13 +170,11 @@ public class KafkaController implements Serializer {
                     }
 
                     i++;
-                    this.sendMessage("localhost", m, "test");
-                    if (i>2000) {
-                        System.out.println("\n\n\n" + (i*j) + "\n\n\n");
-                        i=0;
-                        j++;
+                    this.sendMessage(m, "test");
+                    if (i%1000 == 0) {
+                        KafkaBenchmark.getInstance().setBytePerMessage(toByteArray(m).length);
+                        KafkaBenchmark.getInstance().setnMessages(i);
                     }
-                    //System.out.println("send");
                 }
                 catch (Exception e){
                     checkErrors(bufferReading, type);
@@ -202,7 +186,7 @@ public class KafkaController implements Serializer {
         }
     }
 
-    public static void checkErrors (String[] buffer, Integer type) {
+    private static void checkErrors(String[] buffer, Integer type) {
 
         for (String s:buffer){
             if (!consistencyCheck(s))
@@ -268,7 +252,7 @@ public class KafkaController implements Serializer {
         }
     }
 
-    public static void printBuffer (String comment, String[] buffer) {
+    private static void printBuffer(String comment, String[] buffer) {
 
         System.out.println(comment);
         for (String s:buffer) {
@@ -278,8 +262,19 @@ public class KafkaController implements Serializer {
 
     }
 
-    public static boolean consistencyCheck(String s) {
+    private static boolean consistencyCheck(String s) {
 
-        return !s.equals("") && s != null && !s.equals(" ");
+        return !s.equals("") && !s.equals(" ");
     }
+
+    private byte[] toByteArray(Object obj) throws IOException {
+        byte[] bytes;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(obj);
+            oos.flush();
+            bytes = bos.toByteArray();
+        }
+        return bytes;
+    }
+
 }

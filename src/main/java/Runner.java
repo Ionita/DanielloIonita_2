@@ -1,5 +1,5 @@
 import controllers.FlinkController;
-import controllers.KafkaController;
+import dataInjection.KafkaController;
 import controllers.Monitor;
 
 
@@ -28,9 +28,17 @@ public class Runner {
 
         Thread thread3 = new Thread(Monitor::new);
 
-        thread3.start();
-        thread1.start();
+//        thread3.start();
+//        thread1.start();
         thread2.start();
+
+        try {
+//            thread1.join();
+            thread2.join();
+//            thread3.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 }
