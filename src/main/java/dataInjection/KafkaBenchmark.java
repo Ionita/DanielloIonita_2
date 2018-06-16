@@ -30,6 +30,9 @@ class KafkaBenchmark {
     }
 
     void stopAll(){
+        System.out.println("Final: Packets sent: \t" + totalMessages);
+        System.out.println("Final_:Time spent in seconds: \t" + totalTime/1000);
+        System.out.println("Final: Average rate: \t" + (totalMessages*bytePerMessage/1000)/totalTime + " MB/s");
         stopAll = true;
     }
 
@@ -46,24 +49,25 @@ class KafkaBenchmark {
             while(!stopAll) {
                 try {
                     Thread.sleep(5000);
-                    if (nMessages != 0) {
-                        if (startTime != 0L){
-                            endtime = System.currentTimeMillis();
-                            System.out.println("Byte per message: " + bytePerMessage);
-                            System.out.println("Throughput Kafka (Bytes): " + ((nMessages*bytePerMessage)/1000)/(endtime-startTime) + " MB/s");
-                            System.out.println("Throughput Kafka: (Messages)" + (nMessages)/(endtime-startTime) + "Messages/ms");
-                            totalMessages += nMessages;
-                            totalTime += endtime-startTime;
-                            System.out.println("Packets sent: " + totalMessages);
-                            System.out.println("Time spent in seconds: " + totalTime/1000);
-                            System.out.println("Average rate: " + (totalMessages/1000)/totalTime + "MB/s");
-                            System.out.println("CPU load: " + getProcessCpuLoad() + "%");
-                            startTime = System.currentTimeMillis();
-                            nMessages = 0;
-                            System.out.println("\n\n");
-                        }
-                        else {
-                            startTime = System.currentTimeMillis();
+                    if(!stopAll){
+                        if (nMessages != 0) {
+                            if (startTime != 0L) {
+                                endtime = System.currentTimeMillis();
+                                System.out.println("Byte per message: \t" + bytePerMessage);
+                                System.out.println("Throughput Kafka (Bytes): \t" + ((nMessages * bytePerMessage) / 1000) / (endtime - startTime) + " MB/s");
+                                System.out.println("Throughput Kafka: (Messages): \t" + (nMessages) / (endtime - startTime) + " Messages/ms");
+                                totalMessages += nMessages;
+                                totalTime += endtime - startTime;
+                                System.out.println("Packets sent: \t" + totalMessages);
+                                System.out.println("Time spent in seconds: \t" + totalTime / 1000);
+                                System.out.println("Average rate: \t" + (totalMessages * bytePerMessage / 1000) / totalTime + " MB/s");
+                                System.out.println("CPU load: \t" + getProcessCpuLoad() + "%");
+                                startTime = System.currentTimeMillis();
+                                nMessages = 0;
+                                System.out.println("\n\n");
+                            } else {
+                                startTime = System.currentTimeMillis();
+                            }
                         }
                     }
                 } catch (InterruptedException e) {
