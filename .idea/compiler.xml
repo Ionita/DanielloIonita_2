@@ -6,11 +6,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="DanielloIonita_2" />
+        <module name="iot-traffic-monitor-flink" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="DanielloIonita_2" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
 </project>
