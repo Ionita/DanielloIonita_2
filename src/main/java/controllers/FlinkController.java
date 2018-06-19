@@ -6,8 +6,6 @@ import entities.Message;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -40,14 +38,14 @@ public class FlinkController {
         //System.out.println("got sources");
         DataStream<Tuple5<Integer, Integer, Integer, Long, Long>> streamTuples = stream.flatMap(new Message2Tuple());
 
-        SingleOutputStreamOperator<Tuple4<Integer, Integer, Integer, Long>> averageSpeedStream = streamTuples
+        SingleOutputStreamOperator<Tuple4<Integer, Integer, Integer, Long>> resultStream = streamTuples
                 .keyBy(0, 1, 2)
-                .timeWindow(Time.seconds((long)10))
+                .timeWindow(Time.seconds((long) 10))
                 .aggregate(new AverageAggregate());
 
 
 
-        averageSpeedStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  st -> {
+        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  st -> {
             Message m = new Message(0);
             m.setDay(st.f0);
             m.setWeek(st.f1);
