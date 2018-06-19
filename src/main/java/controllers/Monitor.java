@@ -1,5 +1,7 @@
 package controllers;
 
+import entities.Message;
+
 public class Monitor {
 
     public Monitor(){
@@ -8,8 +10,10 @@ public class Monitor {
         kc.runConsumer("monitor");
     }
 
-    public void printReceivedMessage(String s) {
-        System.out.println("Received Message: " + s + "\n\n");
+    public void printReceivedMessage(Message st) {
+        System.out.println("Day: " + st.getDay() + "\n" +
+                            "Week:  " + st.getWeek() + "\n" +
+                            "Year: " + st.getYear() + "\n" +
+                            "value: " + st.getCount() + "\n\n");
     }
-
 }

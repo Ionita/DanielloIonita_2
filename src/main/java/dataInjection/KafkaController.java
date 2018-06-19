@@ -95,7 +95,7 @@ public class KafkaController implements Serializer {
         KafkaBenchmark.getInstance().startThread();
 
         Thread thread1 = new Thread(() -> {
-            readData("/home/simone/IdeaProjects/DanielloIonita_2/data/friendships.dat", 0);
+            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
         });
 
         Thread thread2 = new Thread(() -> {

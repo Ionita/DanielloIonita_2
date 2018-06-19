@@ -8,6 +8,8 @@ import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.tuple.Tuple4;
+import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -35,64 +37,68 @@ public class FlinkController {
         DataStreamSource<String> stream = env.addSource(new FlinkKafkaConsumer011(INPUT_KAFKA_TOPIC, new SimpleStringSchema(), properties));
 
 
-        System.out.println("got sources");
-        DataStream<Tuple3<Integer, Long, Long>> streamTuples = stream.flatMap(new Message2Tuple());
+        //System.out.println("got sources");
+        DataStream<Tuple5<Integer, Integer, Integer, Long, Long>> streamTuples = stream.flatMap(new Message2Tuple());
 
-        SingleOutputStreamOperator<Double> averageSpeedStream = streamTuples
-                .keyBy(0)
-                .timeWindow(Time.seconds((long)5))
+        SingleOutputStreamOperator<Tuple4<Integer, Integer, Integer, Long>> averageSpeedStream = streamTuples
+                .keyBy(0, 1, 2)
+                .timeWindow(Time.seconds((long)10))
                 .aggregate(new AverageAggregate());
 
 
 
-        averageSpeedStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  stringDoubleTuple3 -> {
-            System.out.println("ecco il valore: " + stringDoubleTuple3 + "\n\n");
-            return new Gson().toJson(new Message(0)).getBytes();
+        averageSpeedStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  st -> {
+            Message m = new Message(0);
+            m.setDay(st.f0);
+            m.setWeek(st.f1);
+            m.setYear(st.f2);
+            m.setCount(st.f3);
+            return new Gson().toJson(m).getBytes();
         }));
 
         env.execute("Window Traffic Data");
 
     }
 
-    private static class AverageAggregate implements AggregateFunction<Tuple3<Integer, Long, Long>, Tuple2<Long, Long>, Double> {
+    private static class AverageAggregate implements AggregateFunction<Tuple5<Integer, Integer, Integer, Long, Long>, Tuple4<Integer, Integer, Integer, Long>, Tuple4<Integer, Integer, Integer, Long>> {
 
         @Override
-        public Tuple2<Long, Long> createAccumulator() {
+        public Tuple4<Integer, Integer, Integer, Long> createAccumulator() {
             Long l1 = 0L;
-            Long l2 = 0L;
-            return new Tuple2<>(l1, l2);
+            return new Tuple4<>(0, 0, 0, l1);
         }
 
         @Override
-        public Tuple2<Long, Long> add(Tuple3<Integer, Long, Long> value, Tuple2<Long, Long> accumulator) {
-            return new Tuple2<>(accumulator.f0, accumulator.f1 + 1);
+        public Tuple4<Integer, Integer, Integer, Long> add(Tuple5<Integer, Integer, Integer, Long, Long> value, Tuple4<Integer, Integer, Integer, Long> accumulator) {
+            return new Tuple4<>(value.f0, value.f1, value.f2, accumulator.f3 + 1);
         }
 
         @Override
-        public Double getResult(Tuple2<Long, Long> accumulator) {
+        public Tuple4<Integer, Integer, Integer, Long> getResult(Tuple4<Integer, Integer, Integer, Long> accumulator) {
             //return accumulator.f0 / accumulator.f1;        }
-            return accumulator.f1.doubleValue();
+            return accumulator;
         }
 
         @Override
-        public Tuple2<Long, Long> merge(Tuple2<Long, Long> a, Tuple2<Long, Long> b) {
-            return new Tuple2<>(a.f0 + b.f0, a.f1 + b.f1);
+        public Tuple4<Integer, Integer, Integer, Long> merge(Tuple4<Integer, Integer, Integer, Long> a, Tuple4<Integer, Integer, Integer, Long> b) {
+            //return new Tuple4<Integer, Integer, Integer, Long> (a.f0 + b.f0, a.f1 + b.f1);
+            return a;
         }
     }
 
 
-    public static class Message2Tuple implements FlatMapFunction<String, Tuple3<Integer,Long,Long>> {
+    public static class Message2Tuple implements FlatMapFunction<String, Tuple5<Integer, Integer, Integer, Long, Long>> {
 
         @Override
-        public void flatMap(String jsonString, Collector<Tuple3<Integer, Long, Long>> out) {
+        public void flatMap(String jsonString, Collector<Tuple5<Integer, Integer, Integer, Long, Long>> out) {
             ArrayList<Friend> recs = DataReader.getData(jsonString);
             Iterator irecs = recs.iterator();
 
             while (irecs.hasNext()) {
                 Friend record = (Friend) irecs.next();
-                Tuple3 tp3 = new Tuple3<>(record.getHour(), record.getUser_1(), record.getUser_2());
+                Tuple5 tp5 = new Tuple5<>(record.getDay(), record.getWeek(), record.getYear(), record.getUser_1(), record.getUser_2());
 
-                out.collect(tp3);
+                out.collect(tp5);
             }
         }
     }

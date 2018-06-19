@@ -1,8 +1,10 @@
 package entities;
 
+import org.apache.flink.api.java.tuple.Tuple4;
+
 import java.io.Serializable;
 
-public class Message implements Serializable {
+public class Message extends Tuple4<Integer, Integer, Integer, Long> implements Serializable {
 
     private Integer type;
     private String tmp;
@@ -15,6 +17,12 @@ public class Message implements Serializable {
     private Long user_id2;
     private Long comment_replied;
     private Long post_commented;
+
+    //query1
+    private Integer day;
+    private Integer week;
+    private Integer year;
+    private Long count;
 
     public Message(){}
 
@@ -119,4 +127,37 @@ public class Message implements Serializable {
         this.user_id2 = user_id2;
     }
 
+
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public Long getCount() {
+        return count;
+    }
+
+    public void setCount(Long count) {
+        this.count = count;
+    }
+
+    public Integer getWeek() {
+        return week;
+    }
+
+    public void setWeek(Integer week) {
+        this.week = week;
+    }
+
+    public Integer getDay() {
+        return day;
+    }
+
+    public void setDay(Integer day) {
+        this.day = day;
+    }
 }

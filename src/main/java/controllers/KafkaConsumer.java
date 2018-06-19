@@ -108,7 +108,7 @@ public class KafkaConsumer {
      * @param message
      */
     private void workWithMessage(Message message) {
-        m.printReceivedMessage(message.toString());
+        m.printReceivedMessage(message);
     }
 
 

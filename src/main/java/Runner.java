@@ -28,8 +28,8 @@ public class Runner {
 
         Thread thread3 = new Thread(Monitor::new);
 
-//        thread3.start();
-//        thread1.start();
+        thread3.start();
+        thread1.start();
         thread2.start();
 
         try {
