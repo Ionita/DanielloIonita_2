@@ -3,6 +3,7 @@ package entities;
 import org.apache.flink.api.java.tuple.Tuple4;
 
 import java.io.Serializable;
+import java.util.Date;
 
 public class Message extends Tuple4<Integer, Integer, Integer, Long> implements Serializable {
 
@@ -22,6 +23,7 @@ public class Message extends Tuple4<Integer, Integer, Integer, Long> implements 
     private Integer hour;
     private Integer day;
     private Integer week;
+    private Integer month;
     private Integer year;
     private Long count;
 
@@ -169,5 +171,13 @@ public class Message extends Tuple4<Integer, Integer, Integer, Long> implements 
 
     public void setHour(Integer hour) {
         this.hour = hour;
+    }
+
+    public Integer getMonth() {
+        return month;
+    }
+
+    public void setMonth(Integer month) {
+        this.month = month;
     }
 }

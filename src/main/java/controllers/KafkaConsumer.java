@@ -41,10 +41,9 @@ public class KafkaConsumer {
 
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 BOOTSTRAP_SERVERS);
-//        props.put(ConsumerConfig.GROUP_ID_CONFIG,
-//                "KafkaExampleConsumer");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, UUID.randomUUID().toString());
-
+        String randomId = UUID.randomUUID().toString();
+        System.out.println("CONFIGURATION_KAFKA: GROUP_ID_CONFIG: " + randomId);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, randomId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                 LongDeserializer.class.getName());
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
@@ -86,11 +85,6 @@ public class KafkaConsumer {
         //JSON from String to Object
         try {
             Message message = mapper.readValue(record.value(), Message.class);
-
-//            Printer.getInstance().print("Consumer Record:(" + record.key() +
-//                    ", Message: " + message.getID() +
-//                    ", Code: " + message.getCode() +
-//                    ")", "cyan");
             workWithMessage(message);
 
         } catch (IOException e) {

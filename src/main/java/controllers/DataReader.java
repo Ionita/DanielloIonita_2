@@ -8,6 +8,7 @@ import entities.Friend;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class DataReader {
 
@@ -30,6 +31,9 @@ public class DataReader {
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
+
+                //data.setTmp(new Date(Long.parseLong(jsonRecord.get("tmp").getAsString())));
+
                 data.setUser_1(jsonRecord.get("user_id1").getAsLong());
                 data.setUser_2(jsonRecord.get("user_id2").getAsLong());
 

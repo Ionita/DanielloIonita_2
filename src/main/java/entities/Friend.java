@@ -10,18 +10,14 @@ public class Friend {
     private Long user_2;
 
     private Integer hour;
-    private Integer day;
     private Integer year;
-    private Integer week;
 
     public void setTmp(Date tmp) {
 
         this.tmp = tmp;
         Calendar c = GregorianCalendar.getInstance();
         c.setTime(tmp);
-        setDay(c.get(Calendar.DAY_OF_WEEK));
         setYear(c.get(Calendar.YEAR));
-        setWeek(c.get(Calendar.WEEK_OF_YEAR));
         setHour(c.get(Calendar.HOUR_OF_DAY));
     }
 
@@ -44,15 +40,6 @@ public class Friend {
     }
 
 
-    public Integer getDay() {
-        return day;
-    }
-
-    public void setDay(Integer day) {
-        this.day = day;
-    }
-
-
     public Integer getYear() {
         return year;
     }
@@ -62,19 +49,15 @@ public class Friend {
     }
 
 
-    public Integer getWeek() {
-        return week;
-    }
-
-    public void setWeek(Integer week) {
-        this.week = week;
-    }
-
     public Integer getHour() {
         return hour;
     }
 
     public void setHour(Integer hour) {
         this.hour = hour;
+    }
+
+    public Date getTmp() {
+        return tmp;
     }
 }

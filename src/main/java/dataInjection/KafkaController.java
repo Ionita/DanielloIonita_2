@@ -140,7 +140,6 @@ public class KafkaController implements Serializer {
                     Message m = new Message(type);
 
                     if (type == 0) {
-                        //TODO: remember di reject doble freidnship dude, indian style... jei oh --\_\--   --/_/--
                         m.setTmp(bufferReading[0]);
                         m.setUser_id1(Long.valueOf(bufferReading[1]));
                         m.setUser_id2(Long.valueOf(bufferReading[2]));
