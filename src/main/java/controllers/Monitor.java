@@ -123,6 +123,71 @@ public class Monitor {
 
     }
 
+    private int chour = -1;
+    private int cday = -1 ;
+    private int cweek = -1;
+    private int cyear = -1;
+
+    public void makeCheck(Message m){
+
+        //initialization
+        if (chour == -1){
+            chour = m.getHour();
+            cday = m.getDay();
+            cweek = m.getWeek();
+            cyear = m.getYear();
+        }
+
+        //same hour, day, week, year
+        if(m.getHour().equals(chour) && m.getDay().equals(cday) && m.getWeek().equals(cweek)){
+            sumAll(0, m);
+        }
+        // next hour, same day, week, year
+        else if(m.getHour() > chour && m.getDay().equals(cday) && m.getWeek().equals(cweek)){
+            sumAll(1, m);
+        }
+        //next day, same week, year
+        else if(m.getDay() > cday && m.getWeek().equals(cweek)){
+            sumAll(2, m);
+        }
+        // next week, same year
+        else if(m.getWeek() > cweek){
+            sumAll(3, m);
+        }
+        else if (m.getWeek() < cweek) {
+            chour = m.getHour();
+            cday = m.getDay();
+            cweek = m.getWeek();
+            cyear = m.getYear();
+            sumAll(0, m);
+        }
+        //error
+        else
+            System.out.println("currentHour: " + chour + ", m.hour: " + m.getHour() + ", currentDay: " + cday + ", m.day: " + m.getDay() + ", currentWeek: " + cweek+ ", m.week: "+ m.getWeek()+ ", currentYear: " + cyear + ", m.year: " + m.getYear());
+
+
+    }
+
+    private void sumAll(int type, Message m){
+        if(type > 0) {
+            hour = 0;
+            chour = m.getHour();
+        }
+        if (type > 1) {
+            day = 0;
+            cday = m.getDay();
+        }
+        if (type > 2) {
+            week = 0;
+            cweek = m.getWeek();
+        }
+
+        hour += m.getCount().intValue();
+        day += m.getCount().intValue();
+        week += m.getCount().intValue();
+        lifetime += m.getCount().intValue();
+    }
+
 
 
 
