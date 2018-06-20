@@ -14,11 +14,6 @@ public class Friend {
     private Integer year;
     private Integer week;
 
-
-    public Date getTmp() {
-        return tmp;
-    }
-
     public void setTmp(Date tmp) {
 
         this.tmp = tmp;
@@ -28,8 +23,6 @@ public class Friend {
         setYear(c.get(Calendar.YEAR));
         setWeek(c.get(Calendar.WEEK_OF_YEAR));
         setHour(c.get(Calendar.HOUR_OF_DAY));
-
-
     }
 
 

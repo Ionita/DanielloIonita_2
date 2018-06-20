@@ -31,7 +31,7 @@ public class Monitor {
         }
 
         if ((currentHour.equals(m.getHour()) && (currentDay.equals(m.getDay())) && currentWeek.equals(m.getWeek())) && currentYear.equals(m.getYear())) {
-           //amicizia nella stessa ora dello stesso giorno
+            //amicizia nella stessa ora dello stesso giorno
             hour += m.getCount().intValue();
             day += m.getCount().intValue();
             week += m.getCount().intValue();
@@ -89,7 +89,7 @@ public class Monitor {
             System.out.println("settimane non in sequenza");
         }
 
-        if (currentYear < m.getYear()) {
+        if (m.getYear() > currentYear) {
             hour = 0;
             day = 0;
             week = 0;
@@ -106,7 +106,7 @@ public class Monitor {
             right++;
         else
             left++;
-        printable();
+        printable(isRight);
 
     }
 
@@ -116,9 +116,10 @@ public class Monitor {
         kc.runConsumer("monitor2");
     }
 
-    public void printable () {
-        System.out.println("Ora: " + currentHour + "\t, giorno: " + currentDay + "\t,settimana: " + currentWeek + "\t, anno: " + currentYear);
-        System.out.println(hour + "\t" + day  + "\t" + week + "\t" + lifetime + "\t: right packets: " + right + "\t: left packets" + left );
+    private void printable (int isLeft) {
+        //System.out.println("Ora: " + currentHour + "\t, giorno: " + currentDay + "\t,settimana: " + currentWeek + "\t, anno: " + currentYear);
+        if(isLeft == 0)
+            System.out.println(hour + "\t" + day  + "\t" + week + "\t" + lifetime + "\t: right packets: " + right + "\t: left packets" + left );
 
     }
 
@@ -176,7 +177,7 @@ public class Monitor {
         }*//*
 
 
-    *//*System.out.println("Day: " + st.getDay() + "\n" +
+     *//*System.out.println("Day: " + st.getDay() + "\n" +
                             "Week:  " + st.getWeek() + "\n" +
                             "Year: " + st.getYear() + "\n" +
                             "value: " + st.getCount() + "\n\n");

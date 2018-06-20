@@ -6,23 +6,32 @@ import entities.Message;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.tuple.Tuple6;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.datastream.WindowedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
+import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows;
+import org.apache.flink.streaming.api.windowing.triggers.Trigger;
+import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
+import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
 import org.apache.flink.util.Collector;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Properties;
 
-public class FlinkController {
+public class FlinkController implements Serializable {
 
     private static String INPUT_KAFKA_TOPIC = null;
+    private Integer currentHour = -1;
 
     public void calculateAvg() throws Exception {
 
@@ -36,16 +45,16 @@ public class FlinkController {
 
 
         //System.out.println("got sources");
-        DataStream<Tuple6<Integer, Integer, Integer, Integer, Long, Long>> streamTuples = stream.flatMap(new Message2Tuple());
+        DataStream<Tuple6<Integer,Integer, Integer, Integer, Long, Long>> streamTuples = stream.flatMap(new Message2Tuple());
 
-        SingleOutputStreamOperator<Tuple5<Integer, Integer, Integer, Integer, Long>> resultStream = streamTuples
-                .keyBy(0, 1, 2, 3)
-                .countWindow(1)
+        SingleOutputStreamOperator<Tuple5<Integer, Integer, Integer, Integer, Long>> resultStream =
+                streamTuples
+                .keyBy(3)
+                .window(GlobalWindows.create())
+                .trigger(new MyTrigger())
                 .aggregate(new AverageAggregate());
 
-
         resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor2",  st -> {
-            //System.out.println("stranger things");
             Message m = new Message(0);
             m.setHour(st.f0);
             m.setDay(st.f1);
@@ -55,7 +64,28 @@ public class FlinkController {
             return new Gson().toJson(m).getBytes();
         }));
 
+/*
+        SingleOutputStreamOperator<Tuple4<Integer, Integer, Integer, Long>> resultStream = streamTuples
+                .keyBy(0, 1, 2)
+                //.timeWindow(Time.seconds((long) 10))
+                .window(GlobalWindows.create())
+                .trigger(new MyTrigger())
+                .aggregate(new AverageAggregate());
+
+
+
+        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  st -> {
+            Message m = new Message(0);
+            m.setDay(st.f0);
+            m.setWeek(st.f1);
+            m.setYear(st.f2);
+            m.setCount(st.f3);
+            return new Gson().toJson(m).getBytes();
+        }));
+*/
+
         env.execute("Window Traffic Data");
+
     }
 
     private static class AverageAggregate implements AggregateFunction<Tuple6<Integer, Integer, Integer, Integer, Long, Long>, Tuple5<Integer, Integer, Integer, Integer, Long>, Tuple5<Integer, Integer, Integer, Integer, Long>> {
@@ -101,4 +131,36 @@ public class FlinkController {
         }
     }
 
+    private class MyTrigger extends Trigger<Tuple6<Integer, Integer, Integer, Integer, Long, Long>, GlobalWindow> {
+        @Override
+        public TriggerResult onElement(Tuple6<Integer, Integer, Integer, Integer, Long, Long> tuple, long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+
+            if (currentHour == -1)
+                currentHour = tuple.f0;
+
+            if (tuple.f0.equals(currentHour)){
+                return TriggerResult.CONTINUE;
+            }
+            else {
+                currentHour = tuple.f0;
+                return TriggerResult.FIRE_AND_PURGE;
+            }
+
+        }
+
+        @Override
+        public TriggerResult onProcessingTime(long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+            return TriggerResult.CONTINUE;
+        }
+
+        @Override
+        public TriggerResult onEventTime(long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+            return TriggerResult.CONTINUE;
+        }
+
+        @Override
+        public void clear(GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+
+        }
+    }
 }
