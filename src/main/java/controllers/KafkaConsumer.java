@@ -103,6 +103,7 @@ public class KafkaConsumer {
      */
     private void workWithMessage(Message message) {
         //m.rotation(message);
+        //System.out.println(message.getTmp());
         m.makeCheck(message);
 
         //System.out.println(message.getYear());

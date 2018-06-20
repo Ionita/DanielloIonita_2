@@ -33,6 +33,7 @@ public class FlinkController implements Serializable {
 
     private static String INPUT_KAFKA_TOPIC = null;
     private Integer currentHour = -1;
+    private Date accumulatorDate = null;
 
     public void calculateAvg() throws Exception {
 
@@ -90,15 +91,18 @@ public class FlinkController implements Serializable {
 
         @Override
         public Tuple4<Integer, Integer, Date, Long> getResult(Tuple4<Integer, Integer, Date, Long> accumulator) {
+            //System.out.println(accumulator.f2.toString());
             return accumulator;
         }
 
         @Override
         public Tuple4<Integer, Integer, Date, Long> merge(Tuple4<Integer, Integer, Date, Long> a, Tuple4<Integer, Integer, Date, Long> b) {
-            if(a.f2.before(b.f2))
+            if(a.f2.before(b.f2)) {
                 return a;
-            else
+            }
+            else {
                 return b;
+            }
         }
     }
 
@@ -125,9 +129,9 @@ public class FlinkController implements Serializable {
             if (currentHour == -1)
                 currentHour = tuple.f0;
 
-            if (tuple.f0.equals(currentHour)){
+            if (tuple.f0.equals(currentHour))
                 return TriggerResult.CONTINUE;
-            }
+
             else {
                 currentHour = tuple.f0;
                 return TriggerResult.FIRE_AND_PURGE;

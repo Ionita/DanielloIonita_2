@@ -48,8 +48,10 @@ public class Monitor {
         fillFields(m);
 
         //initialization
-        if (firstTmpOfTheWeek == null)
+        if (firstTmpOfTheWeek == null) {
             firstTmpOfTheWeek = new Date(Long.parseLong(m.getTmp()));
+            //System.out.println(firstTmpOfTheWeek.toString());
+        }
 
         if (chour == -1){
             chour = m.getHour();
@@ -87,7 +89,6 @@ public class Monitor {
 
     }
 
-
     private void sumAll(int type, Message m){
         if(type > 0) {
             dayHours[chour] = hour;
@@ -113,7 +114,6 @@ public class Monitor {
         week += m.getCount().intValue();
         lifetime += m.getCount().intValue();
     }
-
 
     private void query1Results (String ts, Integer[] value) {
 
@@ -141,11 +141,11 @@ public class Monitor {
     private void fillFields(Message m){
         Calendar c = Calendar.getInstance();
         c.setTimeInMillis(Long.parseLong(m.getTmp()));
-        m.setHour(Calendar.HOUR_OF_DAY);
-        m.setDay(Calendar.DAY_OF_WEEK);
-        m.setWeek(Calendar.WEEK_OF_YEAR);
-        m.setMonth(Calendar.MONTH);
-        m.setYear(Calendar.YEAR);
+        m.setHour(c.get(Calendar.HOUR_OF_DAY));
+        m.setDay(c.get(Calendar.DAY_OF_WEEK));
+        m.setWeek(c.get(Calendar.WEEK_OF_YEAR));
+        m.setMonth(c.get(Calendar.MONTH));
+        m.setYear(c.get(Calendar.YEAR));
     }
 
 }
