@@ -33,9 +33,9 @@ public class Runner {
         thread2.start();
 
         try {
-//            thread1.join();
+            thread1.join();
             thread2.join();
-//            thread3.join();
+            thread3.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

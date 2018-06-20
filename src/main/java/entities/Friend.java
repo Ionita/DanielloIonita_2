@@ -9,6 +9,7 @@ public class Friend {
     private Long user_1;
     private Long user_2;
 
+    private Integer hour;
     private Integer day;
     private Integer year;
     private Integer week;
@@ -26,6 +27,7 @@ public class Friend {
         setDay(c.get(Calendar.DAY_OF_YEAR));
         setYear(c.get(Calendar.YEAR));
         setWeek(c.get(Calendar.WEEK_OF_YEAR));
+        setHour(c.get(Calendar.HOUR_OF_DAY));
 
 
     }
@@ -73,5 +75,13 @@ public class Friend {
 
     public void setWeek(Integer week) {
         this.week = week;
+    }
+
+    public Integer getHour() {
+        return hour;
+    }
+
+    public void setHour(Integer hour) {
+        this.hour = hour;
     }
 }

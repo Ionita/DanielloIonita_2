@@ -19,6 +19,7 @@ public class Message extends Tuple4<Integer, Integer, Integer, Long> implements 
     private Long post_commented;
 
     //query1
+    private Integer hour;
     private Integer day;
     private Integer week;
     private Integer year;
@@ -159,5 +160,14 @@ public class Message extends Tuple4<Integer, Integer, Integer, Long> implements 
 
     public void setDay(Integer day) {
         this.day = day;
+    }
+
+
+    public Integer getHour() {
+        return hour;
+    }
+
+    public void setHour(Integer hour) {
+        this.hour = hour;
     }
 }
