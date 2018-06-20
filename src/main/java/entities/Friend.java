@@ -24,7 +24,7 @@ public class Friend {
         this.tmp = tmp;
         Calendar c = GregorianCalendar.getInstance();
         c.setTime(tmp);
-        setDay(c.get(Calendar.DAY_OF_YEAR));
+        setDay(c.get(Calendar.DAY_OF_WEEK));
         setYear(c.get(Calendar.YEAR));
         setWeek(c.get(Calendar.WEEK_OF_YEAR));
         setHour(c.get(Calendar.HOUR_OF_DAY));

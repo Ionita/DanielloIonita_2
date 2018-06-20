@@ -31,6 +31,7 @@ public class Monitor {
         }
 
         if ((currentHour.equals(m.getHour()) && (currentDay.equals(m.getDay())) && currentWeek.equals(m.getWeek())) && currentYear.equals(m.getYear())) {
+           //amicizia nella stessa ora dello stesso giorno
             hour += m.getCount().intValue();
             day += m.getCount().intValue();
             week += m.getCount().intValue();
@@ -112,10 +113,11 @@ public class Monitor {
     public Monitor(){
         KafkaConsumer kc = new KafkaConsumer();
         kc.setAttributes(this);
-        kc.runConsumer("monitor");
+        kc.runConsumer("monitor2");
     }
 
     public void printable () {
+        System.out.println("Ora: " + currentHour + "\t, giorno: " + currentDay + "\t,settimana: " + currentWeek + "\t, anno: " + currentYear);
         System.out.println(hour + "\t" + day  + "\t" + week + "\t" + lifetime + "\t: right packets: " + right + "\t: left packets" + left );
 
     }

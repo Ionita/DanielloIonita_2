@@ -12,11 +12,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.api.windowing.triggers.Trigger;
-import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
-import org.apache.flink.streaming.api.windowing.windows.Window;
+
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
 import org.apache.flink.util.Collector;
@@ -44,11 +40,11 @@ public class FlinkController {
 
         SingleOutputStreamOperator<Tuple5<Integer, Integer, Integer, Integer, Long>> resultStream = streamTuples
                 .keyBy(0, 1, 2, 3)
-                .countWindowAll(1)
+                .countWindow(1)
                 .aggregate(new AverageAggregate());
 
 
-        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  st -> {
+        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor2",  st -> {
             //System.out.println("stranger things");
             Message m = new Message(0);
             m.setHour(st.f0);

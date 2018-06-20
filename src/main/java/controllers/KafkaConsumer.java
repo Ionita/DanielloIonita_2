@@ -64,7 +64,7 @@ public class KafkaConsumer {
 
         while (true) {
             final ConsumerRecords<Long, String> consumerRecords =
-                    consumer.poll(1000);
+                    consumer.poll(1);
 
 //            if (consumerRecords.count()==0) {
 //                noRecordsCount++;
