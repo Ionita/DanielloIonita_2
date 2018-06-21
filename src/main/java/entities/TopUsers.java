@@ -9,7 +9,8 @@ public class TopUsers {
     private Integer posts_number;
     private Integer comments_number;
 
-    //friendship
+    //query 3
+    private String username;
     private Long user_id;
     private Date tmp;
     private Integer hour;
@@ -63,5 +64,13 @@ public class TopUsers {
 
     public void setHour(Integer hour) {
         this.hour = hour;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

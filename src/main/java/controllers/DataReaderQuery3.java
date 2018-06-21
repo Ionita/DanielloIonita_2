@@ -61,6 +61,7 @@ public class DataReaderQuery3 {
             e.printStackTrace();
         }
         a.setUser_id(jsonString.get("user_id1").getAsLong());
+        a.setUsername(jsonString.get("user_name").getAsString());
         topUsers.add(a);
 
     }
@@ -75,6 +76,7 @@ public class DataReaderQuery3 {
             e.printStackTrace();
         }
         a.setUser_id(jsonString.get("user_id1").getAsLong());
+        a.setUsername(jsonString.get("user_name").getAsString());
         topUsers.add(a);
 
     }

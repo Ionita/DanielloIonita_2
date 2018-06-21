@@ -26,8 +26,10 @@ public class KafkaController implements Serializer {
 
     private final Producer<Long, String> producer;
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    int type;
 
-    public KafkaController(){
+    public KafkaController(int i){
+        this.type = i;
         producer = createProducer();
     }
 
@@ -48,7 +50,6 @@ public class KafkaController implements Serializer {
         return new KafkaProducer<>(props);
     }
 
-
     private void sendMessage(Message m, String topic) {
 
         long time = System.currentTimeMillis();
@@ -65,12 +66,10 @@ public class KafkaController implements Serializer {
         }
     }
 
-
     @Override
     public void configure(Map map, boolean b) {
 
     }
-
 
     @Override
     public byte[] serialize(String arg0, Object arg1) {
@@ -84,44 +83,41 @@ public class KafkaController implements Serializer {
         return retVal;
     }
 
-
     @Override
     public void close() {
 
     }
 
-    public void kafkaStart() {
+    public void kafkaStart() throws InterruptedException {
+
         KafkaBenchmark.getInstance().startTime();
         KafkaBenchmark.getInstance().startThread();
 
-        Thread thread1 = new Thread(() -> {
-            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
-        });
-
-        Thread thread2 = new Thread(() -> {
-            try {
-                sendQuery3Data("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/query3_file.txt");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-
-        Thread thread3 = new Thread(() -> {
-            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
-        });
-
-//        thread1.start();
-        //thread2.start();
-        thread3.start();
-
-        try {
-//            thread1.join();
-//            thread2.join();
-            thread3.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (type == 1){
+            Thread thread1 = new Thread(() -> {
+                readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
+            });
+            thread1.start();
+            thread1.join();
         }
-
+        else if(type == 2){
+            Thread thread3 = new Thread(() -> {
+                readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
+            });
+            thread3.start();
+            thread3.join();
+        }
+        else {
+            Thread thread2 = new Thread(() -> {
+                try {
+                    sendQuery3Data("/home/simone/IdeaProjects/DanielloIonita_2/query3_file.txt");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            thread2.start();
+            thread2.join();
+        }
         KafkaBenchmark.getInstance().stopAll();
 
     }

@@ -45,9 +45,9 @@ public class FlinkControllerQuery3 implements Serializable {
 
 
         //System.out.println("got sources");
-        DataStream<Tuple3<Date, Integer, Long>> streamTuples = stream.flatMap(new Message2Tuple());
+        DataStream<Tuple4<Date, Integer, Long, String>> streamTuples = stream.flatMap(new Message2Tuple());
 
-        SingleOutputStreamOperator<Tuple3<Date, Long, Long>> resultStream =
+        SingleOutputStreamOperator<Tuple4<Date, Long, Long, String>> resultStream =
                 streamTuples
                         .keyBy(2)
                         .window(GlobalWindows.create())
@@ -59,6 +59,7 @@ public class FlinkControllerQuery3 implements Serializable {
             m.setTmp(String.valueOf(st.f0.getTime()));
             m.setUser_id1(st.f1);
             m.setCount(st.f2);
+            m.setUser_name(st.f3);
             return new Gson().toJson(m).getBytes();
         }));
 
@@ -66,33 +67,33 @@ public class FlinkControllerQuery3 implements Serializable {
 
     }
 
-    private static class AverageAggregate implements AggregateFunction<Tuple3<Date, Integer, Long>, Tuple3<Date, Long, Long>, Tuple3<Date, Long, Long>> {
+    private static class AverageAggregate implements AggregateFunction<Tuple4<Date, Integer, Long, String>, Tuple4<Date, Long, Long, String>, Tuple4<Date, Long, Long, String>> {
 
         @Override
-        public Tuple3<Date, Long, Long> createAccumulator() {
-            return new Tuple3<>(null, 0L, 0L);
+        public Tuple4<Date, Long, Long, String> createAccumulator() {
+            return new Tuple4<>(null, 0L, 0L, null);
         }
 
         @Override
-        public Tuple3<Date, Long, Long> add(Tuple3<Date, Integer, Long> value, Tuple3<Date, Long, Long> accumulator) {
+        public Tuple4<Date, Long, Long, String> add(Tuple4<Date, Integer, Long, String> value, Tuple4<Date, Long, Long, String> accumulator) {
             if (accumulator.f0 == null)
-                return new Tuple3<>(value.f0, value.f2, accumulator.f2 + 1);
+                return new Tuple4<>(value.f0, value.f2, accumulator.f2 + 1, value.f3);
             else if (accumulator.f0.after(value.f0))
-                return new Tuple3<>(value.f0, value.f2, accumulator.f2 + 1);
+                return new Tuple4<>(value.f0, value.f2, accumulator.f2 + 1, value.f3);
             else if (accumulator.f0.before(value.f0))
-                return new Tuple3<>(accumulator.f0, accumulator.f2, accumulator.f2 + 1);
+                return new Tuple4<>(accumulator.f0, accumulator.f2, accumulator.f2 + 1, value.f3);
             else
-                return new Tuple3<>(value.f0, value.f2, accumulator.f2 + 1);
+                return new Tuple4<>(value.f0, value.f2, accumulator.f2 + 1, value.f3);
         }
 
         @Override
-        public Tuple3<Date, Long, Long> getResult(Tuple3<Date, Long, Long> accumulator) {
+        public Tuple4<Date, Long, Long, String> getResult(Tuple4<Date, Long, Long, String> accumulator) {
             //System.out.println(accumulator.f2.toString());
             return accumulator;
         }
 
         @Override
-        public Tuple3<Date, Long, Long> merge(Tuple3<Date, Long, Long> a, Tuple3<Date, Long, Long> b) {
+        public Tuple4<Date, Long, Long, String> merge(Tuple4<Date, Long, Long, String> a, Tuple4<Date, Long, Long, String> b) {
             if(a.f0.before(b.f0)) {
                 return a;
             }
@@ -102,25 +103,25 @@ public class FlinkControllerQuery3 implements Serializable {
         }
     }
 
-    public static class Message2Tuple implements FlatMapFunction<String, Tuple3<Date, Integer, Long>> {
+    public static class Message2Tuple implements FlatMapFunction<String, Tuple4<Date, Integer, Long, String>> {
 
         @Override
-        public void flatMap(String jsonString, Collector<Tuple3<Date, Integer, Long>> out) {
+        public void flatMap(String jsonString, Collector<Tuple4<Date, Integer, Long, String>> out) {
             ArrayList<TopUsers> recs = DataReaderQuery3.getData(jsonString);
             Iterator irecs = recs.iterator();
 
             while (irecs.hasNext()) {
                 TopUsers record = (TopUsers) irecs.next();
-                Tuple3 tp3 = new Tuple3<>(record.getTmp(), record.getHour(), record.getUser_id());
+                Tuple4 tp4 = new Tuple4<>(record.getTmp(), record.getHour(), record.getUser_id(), record.getUsername());
 
-                out.collect(tp3);
+                out.collect(tp4);
             }
         }
     }
 
-    private class MyTrigger extends Trigger<Tuple3<Date, Integer, Long>, GlobalWindow> {
+    private class MyTrigger extends Trigger<Tuple4<Date, Integer, Long, String>, GlobalWindow> {
         @Override
-        public TriggerResult onElement(Tuple3<Date, Integer, Long> tuple, long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+        public TriggerResult onElement(Tuple4<Date, Integer, Long, String> tuple, long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
 
             if (currentHour == -1)
                 currentHour = tuple.f1;
