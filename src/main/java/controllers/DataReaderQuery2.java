@@ -23,6 +23,7 @@ public class DataReaderQuery2 {
         JsonElement element = parser.parse(jsonString);
 
         if (element.isJsonObject()) {
+            Boolean doNothing = false;
             try {
                 JsonObject jsonRecord = element.getAsJsonObject();
                 Comment data = new Comment();
@@ -33,7 +34,7 @@ public class DataReaderQuery2 {
                 }
 
                 data.setComment_id(jsonRecord.get("comment_id").getAsLong());
-                data.setUser_id(jsonRecord.get("user_id").getAsLong());
+                data.setUser_id(jsonRecord.get("user_id1").getAsLong());
                 data.setComment(jsonRecord.get("comment").getAsString());
                 data.setUser_name(jsonRecord.get("user_name").getAsString());
                 if (jsonRecord.get("comment_replied").isJsonNull() && !jsonRecord.get("post_commented").isJsonNull()) {
@@ -42,13 +43,14 @@ public class DataReaderQuery2 {
                     data.setPost_commented(jsonRecord.get("post_commented").getAsLong());
                 }
                 else {
-                    data.setComment_replied(jsonRecord.get("comment_replied").getAsLong());
-                    data.setPost_commented(null);
+                    doNothing = true;
                 }
 
-                comments.add(data);
+                if(!doNothing) {
+                    comments.add(data);
+                }
             } catch (Exception e){
-                System.out.println("Eccezione");
+                System.out.println("exception query 2: \n" + jsonString);
             }
 
         } else

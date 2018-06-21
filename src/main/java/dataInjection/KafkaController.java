@@ -106,14 +106,14 @@ public class KafkaController implements Serializer {
             readData("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat", 2);
         });
 
-        thread1.start();
+//        thread1.start();
         //thread2.start();
-//        thread3.start();
+        thread3.start();
 
         try {
-            thread1.join();
+//            thread1.join();
 //            thread2.join();
-//            thread3.join();
+            thread3.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -133,6 +133,7 @@ public class KafkaController implements Serializer {
             while ((line = br.readLine()) != null) {
 
                 String[] bufferReading = line.split(cvsSplitBy, -1);
+                String topicToSend;
 
                 try {
                     // use comma as separator
@@ -143,6 +144,7 @@ public class KafkaController implements Serializer {
                         m.setTmp(bufferReading[0]);
                         m.setUser_id1(Long.valueOf(bufferReading[1]));
                         m.setUser_id2(Long.valueOf(bufferReading[2]));
+                        topicToSend = "query1";
                     }
                     else if (type == 1) {
                         m.setTmp(bufferReading[0]);
@@ -150,6 +152,7 @@ public class KafkaController implements Serializer {
                         m.setUser_id1(Long.valueOf(bufferReading[2]));
                         m.setPost(bufferReading[3]);
                         m.setUser_name(bufferReading[4]);
+                        topicToSend = "query3";
                     }
 
                     else {
@@ -166,11 +169,12 @@ public class KafkaController implements Serializer {
                             m.setComment_replied(Long.valueOf(bufferReading[5]));
                             m.setPost_commented(null);
                         }
+                        topicToSend = "query2";
                     }
 
                     i++;
                     //System.out.println(bufferReading[0]);
-                    this.sendMessage(m, "test");
+                    this.sendMessage(m, topicToSend);
                     if (i%1000 == 0) {
                         KafkaBenchmark.getInstance().setBytePerMessage(toByteArray(m).length);
                         KafkaBenchmark.getInstance().setnMessages(i);

@@ -5,7 +5,7 @@ import org.apache.flink.api.java.tuple.Tuple4;
 import java.io.Serializable;
 import java.util.Date;
 
-public class Message extends Tuple4<Integer, Integer, Integer, Long> implements Serializable {
+public class Message implements Serializable {
 
     private Integer type;
     private String tmp;
