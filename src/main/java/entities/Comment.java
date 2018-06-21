@@ -1,9 +1,12 @@
 package entities;
 
 import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class Comment {
-    private Timestamp tmp;
+    private Date tmp;
     private Long comment_id;
     private Long user_id;
     private String comment;
@@ -11,13 +14,17 @@ public class Comment {
     private Long comment_replied;
     private Long post_commented;
 
-    public Timestamp getTmp() {
+    private Integer hour;
+
+    public Date getTmp() {
         return tmp;
     }
 
-    public void setTmp(Timestamp tmp) {
+    public void setTmp(Date tmp) {
         this.tmp = tmp;
-    }
+        Calendar c = GregorianCalendar.getInstance();
+        c.setTime(tmp);
+        setHour(c.get(Calendar.HOUR_OF_DAY));    }
 
     public Long getComment_id() {
         return comment_id;
@@ -65,5 +72,13 @@ public class Comment {
 
     public void setPost_commented(Long post_commented) {
         this.post_commented = post_commented;
+    }
+
+    public Integer getHour() {
+        return hour;
+    }
+
+    public void setHour(Integer hour) {
+        this.hour = hour;
     }
 }
