@@ -1,8 +1,8 @@
-import controllers.FlinkController;
-import controllers.FlinkControllerQuery2;
-import controllers.FlinkControllerQuery3;
+import controllers.query1.FlinkController;
+import controllers.query2.FlinkControllerQuery2;
+import controllers.query3.FlinkControllerQuery3;
 import dataInjection.KafkaController;
-import controllers.Monitor;
+import controllers.query1.Monitor;
 
 
 public class Runner {

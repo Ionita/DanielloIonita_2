@@ -1,7 +1,6 @@
-package controllers;
+package controllers.query1;
 
 import entities.Message;
-import sun.util.resources.CalendarData;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
