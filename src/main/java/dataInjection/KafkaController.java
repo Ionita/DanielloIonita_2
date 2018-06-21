@@ -95,15 +95,19 @@ public class KafkaController implements Serializer {
         KafkaBenchmark.getInstance().startThread();
 
         Thread thread1 = new Thread(() -> {
-            readData("/home/simone/IdeaProjects/DanielloIonita_2/data/friendships.dat", 0);
+            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
         });
 
         Thread thread2 = new Thread(() -> {
-            readData("/home/simone/IdeaProjects/DanielloIonita_2/data/posts.dat", 1);
+            try {
+                sendQuery3Data("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/query3_file.txt");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
 
         Thread thread3 = new Thread(() -> {
-            readData("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat", 2);
+            readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
         });
 
 //        thread1.start();
@@ -146,15 +150,6 @@ public class KafkaController implements Serializer {
                         m.setUser_id2(Long.valueOf(bufferReading[2]));
                         topicToSend = "query1";
                     }
-                    else if (type == 1) {
-                        m.setTmp(bufferReading[0]);
-                        m.setPost_id(Long.valueOf(bufferReading[1]));
-                        m.setUser_id1(Long.valueOf(bufferReading[2]));
-                        m.setPost(bufferReading[3]);
-                        m.setUser_name(bufferReading[4]);
-                        topicToSend = "query3";
-                    }
-
                     else {
                         m.setTmp(bufferReading[0]);
                         m.setComment_id(Long.valueOf(bufferReading[1]));
@@ -173,7 +168,7 @@ public class KafkaController implements Serializer {
                     }
 
                     i++;
-                    //System.out.println(bufferReading[0]);
+
                     this.sendMessage(m, topicToSend);
                     if (i%1000 == 0) {
                         KafkaBenchmark.getInstance().setBytePerMessage(toByteArray(m).length);
@@ -281,4 +276,55 @@ public class KafkaController implements Serializer {
         return bytes;
     }
 
+
+    private void sendQuery3Data (String filepath) throws IOException {
+
+        String line;
+        String cvsSplitBy = "\\|";
+
+        BufferedReader br = new BufferedReader(new FileReader(filepath));
+        while ((line = br.readLine()) != null) {
+
+            Message m = new Message();
+            String[] bufferReading = line.split(cvsSplitBy, -1);
+            if (bufferReading.length == 3) {
+                //la riga corrisponde a una relazione di friendship
+                m.setType(0);
+                m.setTmp(bufferReading[0]);
+                m.setUser_id1(Long.valueOf(bufferReading[1]));
+                m.setUser_id2(Long.valueOf(bufferReading[2]));
+            }
+            if (bufferReading.length == 5) {
+                //la riga corrisponde a un post
+                m.setType(1);
+                m.setTmp(bufferReading[0]);
+                m.setPost_id(Long.valueOf(bufferReading[1]));
+                m.setUser_id1(Long.valueOf(bufferReading[2]));
+                m.setPost(bufferReading[3]);
+                m.setUser_name(bufferReading[4]);
+            }
+            if (bufferReading.length == 7) {
+                //la riga corrisponde a un comment
+                m.setType(2);
+                m.setTmp(bufferReading[0]);
+                m.setComment_id(Long.valueOf(bufferReading[1]));
+                m.setUser_id1(Long.valueOf(bufferReading[2]));
+                m.setComment(bufferReading[3]);
+                m.setUser_name(bufferReading[4]);
+                if (bufferReading[5].equals("") || bufferReading[5].equals(" ")) {
+                    m.setComment_replied(null);
+                    m.setPost_commented(Long.valueOf(bufferReading[6]));
+                }
+                else {
+                    m.setComment_replied(Long.valueOf(bufferReading[5]));
+                    m.setPost_commented(null);
+                }
+
+            }
+
+            this.sendMessage(m, "query3");
+
+        }
+
+    }
 }
