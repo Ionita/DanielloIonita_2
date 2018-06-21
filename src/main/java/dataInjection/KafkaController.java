@@ -108,7 +108,7 @@ public class KafkaController implements Serializer {
 
         thread1.start();
         //thread2.start();
-        //thread3.start();
+//        thread3.start();
 
         try {
             thread1.join();
