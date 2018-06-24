@@ -1,5 +1,6 @@
 import controllers.query1.FlinkController;
 import controllers.query2.FlinkControllerQuery2;
+import controllers.query2.Monitor2;
 import controllers.query3.FlinkControllerQuery3;
 import dataInjection.KafkaController;
 import controllers.query1.Monitor;
@@ -65,13 +66,16 @@ public class Runner {
                 e.printStackTrace();
             }
         });
+        Thread thread_monitor_query2 = new Thread(Monitor2::new);
 
+
+        thread_monitor_query2.start();
         thread_kafka_injection.start();
         thread_query2.start();
 
         thread_kafka_injection.join();
         thread_query2.join();
-
+        thread_monitor_query2.join();
     }
 
     private static void query3() throws InterruptedException {

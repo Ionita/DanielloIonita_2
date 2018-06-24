@@ -7,16 +7,19 @@ public class Query2_Item {
     private Long post_id;
     private ArrayList<Integer> slidingWindow;
 
-    private Query2_Item (Integer windowSize) {
+    public Query2_Item (int windowSize) {
         slidingWindow = new ArrayList<>();
+        for (int i = 0; i< windowSize; i++){
+            slidingWindow.add(0);
+        }
     }
 
     public Long getTmp() {
         return tmp;
     }
 
-    public void setTmp(Long tmp) {
-        this.tmp = tmp;
+    public void setTmp(String tmp) {
+        this.tmp = Long.parseLong(tmp);
     }
 
     public Long getPost_id() {
@@ -31,7 +34,4 @@ public class Query2_Item {
         return slidingWindow;
     }
 
-    public void setSlidingWindow(ArrayList<Integer> slidingWindow) {
-        this.slidingWindow = slidingWindow;
-    }
 }

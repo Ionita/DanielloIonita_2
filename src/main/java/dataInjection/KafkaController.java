@@ -102,7 +102,7 @@ public class KafkaController implements Serializer {
         }
         else if(type == 2){
             Thread thread3 = new Thread(() -> {
-                readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
+                readData("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat", 2);
             });
             thread3.start();
             thread3.join();
