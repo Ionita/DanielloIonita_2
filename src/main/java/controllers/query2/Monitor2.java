@@ -7,10 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.*;
 
 public class Monitor2 {
 
@@ -19,6 +16,11 @@ public class Monitor2 {
     private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     private Long firstTmp;
     private ArrayList<Integer> tmpSlidingWindows;
+    private Long OK_PACKETS = 0L;
+    private Long DISCARDED_PACKETS = 0L;
+
+    private final String reference = "644564";
+
 
 
     private Integer hour = -1;
@@ -42,6 +44,8 @@ public class Monitor2 {
 
 
     public Monitor2(){
+        Thread thread1 = new Thread(this::printLoading);
+        thread1.start();
         KafkaConsumer kc = new KafkaConsumer();
         kc.setAttributes(this);
         kc.runConsumer("monitor_query2");
@@ -58,20 +62,20 @@ public class Monitor2 {
      *
      */
 
-    public void makeCheck(Message m){
+    void makeCheck(Message m){
         //field filling in message
         fillFields(m);
         //check if it is the first one
         checkFirstOne(m);
         //check if it is inside boundaries
-        checkBoundaries(m);
-        //adding the value
-        //insertPostValue(m);
+        if(checkBoundaries(m)) //TODO <- parte importante da controllare
+            //adding the value
+            insertPostValue(m); //TODO <- parte importante da controllare
 
     }
 
     private void setNewBoundaries(int positions){
-        System.out.println("position = " + positions + "\n\n\n\n\n");
+        //System.out.println("position = " + positions + "\n\n\n\n\n");
         leftBoundaryHour += positions;
         while(leftBoundaryHour > 23){
             leftBoundaryHour -= 24;
@@ -90,7 +94,6 @@ public class Monitor2 {
         while(rightBoundaryHour > 23){
             rightBoundaryHour -= 24;
             rightBoundaryDay = rightBoundaryDay + 1;
-            System.out.println("sommo un giorno ***************************************************");
             while(rightBoundaryDay > 7){
                 rightBoundaryDay -= 7;
                 rightBoundaryWeek ++;
@@ -149,22 +152,13 @@ public class Monitor2 {
         }
     }
 
-    private void checkBoundaries (Message m) {
+    private boolean checkBoundaries (Message m) {
         int messageHour = m.getHour();
         int messageDay = m.getDay();
         int messageWeek = m.getWeek();
         int messageYear = m.getYear();
 
-        System.out.println("left boundaries: ");
-        System.out.println("hour: " + leftBoundaryHour
-        + ", day: " + leftBoundaryDay
-        + ", week: " + leftBoundaryWeek
-        + ", year: " + leftBoundaryYear);
-        System.out.println("right boundaries: ");
-        System.out.println("hour: " + rightBoundaryHour
-        + ", day: " + rightBoundaryDay
-        + ", week: " + rightBoundaryWeek
-        + ", year: " + rightBoundaryYear);
+        //printBoundaries();
 
         Calendar left = Calendar.getInstance();
         left.set(Calendar.HOUR_OF_DAY, leftBoundaryHour);
@@ -182,106 +176,113 @@ public class Monitor2 {
 
         long rightMillis = right.getTimeInMillis();
 
-
-        if(Long.parseLong(m.getTmp()) <= rightMillis && Long.parseLong(m.getTmp()) >= leftMillis){
-            System.out.println("it is in bound");
+        //in the bounds
+        if(messageHour == leftBoundaryHour && messageDay == leftBoundaryDay && messageWeek == leftBoundaryWeek && messageYear == leftBoundaryYear){
+            OK_PACKETS++;
+            return true; //si aggiunge il pacchetto alla finestra senza fare nessuna operazione preliminare
         }
+        //in the bounds
+        else if(Long.parseLong(m.getTmp()) <= rightMillis && Long.parseLong(m.getTmp()) >= leftMillis){
+            OK_PACKETS++;
+            return true; //si aggiunge il pacchetto alla finestra senza fare nessuna operazione preliminare
+        }
+        //out left
         else if (Long.parseLong(m.getTmp()) < leftMillis){
-            System.out.println("fuori a sinistra");
-
-            System.out.println("hour: " + m.getHour()
-                    + ", day: " + m.getDay()
-                    + ", week: " + m.getWeek()
-                    + ", year: " + m.getYear()
-                    + ", left millis: " + leftMillis
-                    + ", right millis: " + rightMillis
-                    + ", current millis: " + m.getTmp());
-            System.out.println("\n\n\n");
-
+            DISCARDED_PACKETS++;
+            printBoundaries();
+            printMessage(m);
+            return false; // non si aggiunge il pacchetto
         }
+        //out right
         else {
-            System.out.println("fuori a destra");
-            System.out.println("hour: " + m.getHour()
-                    + ", day: " + m.getDay()
-                    + ", week: " + m.getWeek()
-                    + ", year: " + m.getYear()
-                    + ", left millis: " + leftMillis
-                    + ", right millis: " + rightMillis
-                    + ", current millis: " + m.getTmp());
-            System.out.println("\n\n\n");
+            //System.out.println("fuori a destra");
+            printBoundaries();
+            printMessage(m);
+            OK_PACKETS++;
+            int oldHour = leftBoundaryHour, oldDay = leftBoundaryDay, oldWeek = leftBoundaryWeek, oldYear = leftBoundaryYear;
 
-            if(messageDay >= rightBoundaryDay)
-                setNewBoundaries(messageHour + (24* (messageDay - rightBoundaryDay))-rightBoundaryHour);
-            else if(messageWeek >= rightBoundaryWeek)
-                System.out.println("cambio settimana\n\n\n");
+            int difference;
 
-            /*if(messageDay == rightBoundaryDay){
-                setNewBoundaries(messageHour-rightBoundaryHour);
+            if(messageDay >= rightBoundaryDay) {
+                difference = messageHour + (24 * (messageDay - rightBoundaryDay))-rightBoundaryHour;
+                setNewBoundaries(difference);
             }
-            else if(messageDay == rightBoundaryDay + 1){
-                setNewBoundaries(messageHour + 24 - rightBoundaryHour);
+            else if(messageWeek >= rightBoundaryWeek) {
+                //cambio settimana
+                difference = messageHour + (24* (messageDay + 7 - rightBoundaryDay))-rightBoundaryHour;
+                setNewBoundaries(difference);
             }
             else{
-                System.out.println("bound troppo alto \n\n\n\n");
-            }*/
-        }
-/*
-        //message in the bounds
-        if ((messageHour >= leftBoundaryHour && messageDay >= leftBoundaryDay && messageWeek >= leftBoundaryWeek && messageYear >= leftBoundaryYear) &&
-                (messageHour <= rightBoundaryHour && messageDay <= rightBoundaryDay && messageWeek <= rightBoundaryWeek && messageYear <= rightBoundaryYear)){
-            System.out.println("sono nel bound");
-        }
-        //message outbound left
-        else if (messageHour < leftBoundaryHour && messageDay <= leftBoundaryDay && messageWeek <= leftBoundaryWeek && messageYear <= leftBoundaryYear){
-            System.out.println("message out of bound left");
-        }
-        //message out of bound right
-        else {
-            System.out.println("message out of bound right, hour: " + m.getHour() + ", day: " + m.getDay());
-            int difference;
-            //message in the same day
-            if (messageDay == rightBoundaryDay){
-                difference = messageHour - rightBoundaryHour;
-                for(int j = 0; j< difference; j++)
-                    slideToRight();
-                setNewBoundaries(difference);
+                difference = 0;
+                System.out.println("cambio anno \n\n\n\n"); // non ancora implementato ma ho visto che
+                                                            // il cambio della settimana così funziona
+                                                            // quindi probabilmente per l'anno è la stessa cosa
             }
-            //else if the day after
-            else if (messageDay == rightBoundaryDay + 1){
-                difference = messageHour + 24 - rightBoundaryHour;
-                for(int j = 0; j< difference; j++)
-                    slideToRight();
-                setNewBoundaries(difference);
-            }
-            else
-                System.out.println("scarta, troppa differenza");
+            System.out.println("difference = " + difference);
+            slideToRight(difference, oldHour, oldDay, oldWeek, oldYear); // ruoto verso destra la finestra e
+                                                                         // salvo i dati nelle prime colonne
+                                                                         // guarda bene soprattutto questa funzione
+            return true;
         }
-        */
+
     }
 
-    private void slideToRight(){
-        Integer[] temp = new Integer[slidingWindowSize];
-        int i = 0;
-        for(Query2_Item q : query2_items){
-            temp[i] = q.getSlidingWindow().get(0);
-            q.getSlidingWindow().remove(0);
-            i++;
+    private void slideToRight(int difference, int oldHour, int oldDay, int oldWeek, int oldYear){
+        //salvo tante colonne quanto è lo spostamento verso destra. faccio la stessa operazione di quando
+        // setto le nuove boundaries. è brutto ma non so come fare altrimenti. Per ora questa operazione
+        // server solamente a stampare il timestamp di riferimento
+        for(int j = 0; j < difference; j++) {
+
+            oldHour ++;
+            if(oldHour == 24){
+                oldHour -= 24;
+                oldDay ++;
+                if(oldDay > 7){
+                    oldDay -= 7;
+                    oldWeek ++;
+                    if(oldWeek > 52){
+                        oldWeek -= 52;
+                        oldYear++;
+                    }
+                }
+            }
+            //ordino i dati (reverse per avere ordine decrescente)
+            query2_items.sort(Comparator.comparingInt(Query2_Item::getFirstWindowPosition).reversed());
+            Integer[] temp = new Integer[20];
+            int k = 0;
+            int maxValue = 10;
+            //prendo i primi dieci valori oppure tutti gli elementi dell'array se in numero inferiore
+            if (query2_items.size() < 10)
+                maxValue = query2_items.size();
+            //salvo i dieci valori in un array temporaneo insieme al loro id
+            for (int i = 0; i  < maxValue; i++){
+                temp[k] = query2_items.get(i).getPost_id().intValue();
+                temp[k+1] = query2_items.get(i).getFirstWindowPosition();
+                k += 2;
+            }
+            //rimuovo la prima colonna a tutti e aggiungo uno zero per mantenere costante la grandezza dell'array
+            for (Query2_Item q : query2_items) {
+                q.getSlidingWindow().remove(0);
+                q.getSlidingWindow().add(0);
+            }
+            //per ora stampo su schermo e basta
+            saveColumnToFile(0, temp, oldHour, oldDay, oldWeek, oldYear);
+            //tmpSlidingWindows.remove(0);
         }
-        //saveColumnToFile(tmpSlidingWindows.get(0), temp);
-        saveColumnToFile(0, temp);
-        //tmpSlidingWindows.remove(0);
     }
 
-    private void saveColumnToFile(Integer integer, Integer[] temp) {
-        for(Query2_Item q : query2_items){
-            System.out.println(q.getPost_id() + ": " + q.getSlidingWindow().toString());
-        }
+    private void saveColumnToFile(Integer integer, Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
+        System.out.println("hour: " + oldHour + ", day: " + oldDay + ", week: " + oldWeek + ", year: " + oldYear + " - " +
+                Arrays.toString(temp));
     }
+
+
 
     private void insertPostValue (Message m) {
         //getting post id
         Long postID = m.getPost_commented();
         int position = checkIfAlreadyIn(postID);
+
         //the item doesn't already exists in the ArrayList
         if (position == -1){
             Query2_Item item = new Query2_Item(slidingWindowSize);
@@ -289,21 +290,20 @@ public class Monitor2 {
             item.setTmp(m.getTmp());
             query2_items.add(item);
             int currenthour = m.getHour();
-            System.out.println("current hour = " + currenthour);
             int currentDay = m.getDay();
+
             // message in the same day as left boundary
             if (currentDay == leftBoundaryDay){
                 int positionInWindow = currenthour - leftBoundaryHour;
-                System.out.println("cerco la posizione: " + positionInWindow);
-                System.out.println("nell'array: " + item.getSlidingWindow().toString());
                 int currentValue = item.getSlidingWindow().get(positionInWindow);
                 item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
             }
             else if (currentDay >= leftBoundaryDay + 1){
-                int positionInWindow = currenthour  + 24 - leftBoundaryHour;
+                int positionInWindow = currenthour  + 23 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
                 int currentValue = item.getSlidingWindow().get(positionInWindow);
                 item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
             }
+            printWindow(item.getPost_id().toString(), reference, item.getSlidingWindow().toString());
         }
 
         //the item is in the array
@@ -317,11 +317,11 @@ public class Monitor2 {
                 query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
             }
             else if (currentDay >= leftBoundaryDay + 1){
-                int positionInWindow = currenthour  + 24 - leftBoundaryHour;
+                int positionInWindow = currenthour  + 23 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
                 int currentValue = query2_items.get(position).getSlidingWindow().get(positionInWindow);
                 query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
             }
-            System.out.println("metti nella posizione corretta");
+            printWindow(query2_items.get(position).getPost_id().toString(), reference, query2_items.get(position).getSlidingWindow().toString());
         }
     }
 
@@ -336,4 +336,46 @@ public class Monitor2 {
         return -1;
     }
 
+
+
+    private void printBoundaries(){
+        System.out.println("left boundaries: ");
+        System.out.println("hour: " + leftBoundaryHour
+                + ", day: " + leftBoundaryDay
+                + ", week: " + leftBoundaryWeek
+                + ", year: " + leftBoundaryYear);
+        System.out.println("right boundaries: ");
+        System.out.println("hour: " + rightBoundaryHour
+                + ", day: " + rightBoundaryDay
+                + ", week: " + rightBoundaryWeek
+                + ", year: " + rightBoundaryYear);
+        System.out.println("OK_PACKETS: " + OK_PACKETS);
+        System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
+    }
+
+    private void printMessage(Message m){
+        System.out.println("message: " + m.getPost_commented());
+        System.out.println("hour: " + m.getHour()
+                + ", day: " + m.getDay()
+                + ", week: " + m.getWeek()
+                + ", year: " + m.getYear());
+        System.out.println("\n\n\n");
+    }
+
+    private void printWindow(String id, String reference, String window){
+        if(id.equals(reference))
+            System.out.println("id: " + id + ", " + window);
+    }
+
+    private void printLoading(){
+        while(true){
+            try {
+                Thread.sleep(10000);
+                printBoundaries();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
 }

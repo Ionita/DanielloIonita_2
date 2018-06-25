@@ -9,7 +9,7 @@ public class Query2_Item {
 
     public Query2_Item (int windowSize) {
         slidingWindow = new ArrayList<>();
-        for (int i = 0; i< windowSize; i++){
+        for (int i = 0; i< windowSize +1; i++){ //rivedi il + 1
             slidingWindow.add(0);
         }
     }
@@ -32,6 +32,10 @@ public class Query2_Item {
 
     public ArrayList<Integer> getSlidingWindow() {
         return slidingWindow;
+    }
+
+    public Integer getFirstWindowPosition(){
+        return getSlidingWindow().get(0);
     }
 
 }
