@@ -44,7 +44,17 @@ public class Monitor2 {
 
 
     public Monitor2(){
-        Thread thread1 = new Thread(this::printLoading);
+        Thread thread1 = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(10000);
+                    System.out.println("OK_PACKETS: " + OK_PACKETS);
+                    System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         thread1.start();
         KafkaConsumer kc = new KafkaConsumer();
         kc.setAttributes(this);
@@ -218,7 +228,6 @@ public class Monitor2 {
                                                             // il cambio della settimana così funziona
                                                             // quindi probabilmente per l'anno è la stessa cosa
             }
-            System.out.println("difference = " + difference);
             slideToRight(difference, oldHour, oldDay, oldWeek, oldYear); // ruoto verso destra la finestra e
                                                                          // salvo i dati nelle prime colonne
                                                                          // guarda bene soprattutto questa funzione
@@ -272,8 +281,22 @@ public class Monitor2 {
     }
 
     private void saveColumnToFile(Integer integer, Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
-        System.out.println("hour: " + oldHour + ", day: " + oldDay + ", week: " + oldWeek + ", year: " + oldYear + " - " +
-                Arrays.toString(temp));
+        try {
+            BufferedWriter br = new BufferedWriter(new FileWriter("query2.csv", true));
+            StringBuilder sb = new StringBuilder();
+            sb.append("hour: ").append(oldHour).append(", day: ").append(oldDay).append(", week: ").append(oldWeek).append(", year: ").append(oldYear).append(" - "); //attento non è nel formato corretto
+            sb.append(Arrays.toString(temp));
+
+            sb.append(System.lineSeparator());
+
+            br.write(sb.toString());
+            br.flush();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //System.out.println("hour: " + oldHour + ", day: " + oldDay + ", week: " + oldWeek + ", year: " + oldYear + " - " +
+        //        Arrays.toString(temp));
     }
 
 
@@ -339,7 +362,8 @@ public class Monitor2 {
 
 
     private void printBoundaries(){
-        System.out.println("left boundaries: ");
+
+/*        System.out.println("left boundaries: ");
         System.out.println("hour: " + leftBoundaryHour
                 + ", day: " + leftBoundaryDay
                 + ", week: " + leftBoundaryWeek
@@ -350,21 +374,21 @@ public class Monitor2 {
                 + ", week: " + rightBoundaryWeek
                 + ", year: " + rightBoundaryYear);
         System.out.println("OK_PACKETS: " + OK_PACKETS);
-        System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
+        System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);*/
     }
 
     private void printMessage(Message m){
-        System.out.println("message: " + m.getPost_commented());
+/*        System.out.println("message: " + m.getPost_commented());
         System.out.println("hour: " + m.getHour()
                 + ", day: " + m.getDay()
                 + ", week: " + m.getWeek()
                 + ", year: " + m.getYear());
-        System.out.println("\n\n\n");
+        System.out.println("\n\n\n");*/
     }
 
     private void printWindow(String id, String reference, String window){
-        if(id.equals(reference))
-            System.out.println("id: " + id + ", " + window);
+/*        if(id.equals(reference))
+            System.out.println("id: " + id + ", " + window);*/
     }
 
     private void printLoading(){
