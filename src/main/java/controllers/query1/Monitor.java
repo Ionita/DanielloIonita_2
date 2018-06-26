@@ -37,9 +37,8 @@ public class Monitor {
         Arrays.fill(dayHours, 0);
         KafkaConsumer kc = new KafkaConsumer();
         kc.setAttributes(this);
-        kc.runConsumer("monitor2");
+        kc.runConsumer("monitor");
     }
-
 
     void makeCheck(Message m){
 
@@ -116,15 +115,13 @@ public class Monitor {
 
     private void query1Results (String ts, Integer[] value) {
 
-
         try {
             BufferedWriter br = new BufferedWriter(new FileWriter("query1.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(ts);
-            sb.append(", ");
             for (Integer element: value) {
-                sb.append(element);
                 sb.append(", ");
+                sb.append(element);
             }
 
             sb.append(System.lineSeparator());

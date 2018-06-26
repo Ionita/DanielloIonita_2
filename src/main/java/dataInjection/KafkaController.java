@@ -95,7 +95,7 @@ public class KafkaController implements Serializer {
 
         if (type == 1){
             Thread thread1 = new Thread(() -> {
-                readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
+                readData("/home/simone/IdeaProjects/DanielloIonita_2/data/friendships.dat", 0);
             });
             thread1.start();
             thread1.join();

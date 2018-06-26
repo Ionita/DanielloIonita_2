@@ -218,12 +218,16 @@ public class Monitor2 {
                 setNewBoundaries(difference);
             }
             else if(messageWeek >= rightBoundaryWeek) {
-                //cambio settimana
+                //week change
                 difference = messageHour + (24* (messageDay + 7 - rightBoundaryDay))-rightBoundaryHour;
                 setNewBoundaries(difference);
             }
             else{
+                //year change
+
                 difference = 0;
+                difference = messageHour + (24* (messageDay + 7 - rightBoundaryDay))-rightBoundaryHour;
+                setNewBoundaries(difference);
                 System.out.println("cambio anno \n\n\n\n"); // non ancora implementato ma ho visto che
                                                             // il cambio della settimana così funziona
                                                             // quindi probabilmente per l'anno è la stessa cosa
@@ -280,13 +284,15 @@ public class Monitor2 {
         }
     }
 
-    private void saveColumnToFile(Integer integer, Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
+    private void saveColumnToFile(Integer tmp, Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
         try {
             BufferedWriter br = new BufferedWriter(new FileWriter("query2.csv", true));
             StringBuilder sb = new StringBuilder();
-            sb.append("hour: ").append(oldHour).append(", day: ").append(oldDay).append(", week: ").append(oldWeek).append(", year: ").append(oldYear).append(" - "); //attento non è nel formato corretto
-            sb.append(Arrays.toString(temp));
-
+            sb.append(oldHour + ":" + oldDay + ":" + oldWeek + ":" + oldYear + " ");
+            for(Integer i: temp){
+                sb.append(", ");
+                sb.append(i);
+            }
             sb.append(System.lineSeparator());
 
             br.write(sb.toString());

@@ -34,7 +34,7 @@ public class FlinkController implements Serializable {
 
     public void calculateAvg() throws Exception {
 
-        INPUT_KAFKA_TOPIC = "test";
+        INPUT_KAFKA_TOPIC = "query1";
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "localhost:9092");
         properties.setProperty("zookeeper.connect", "localhost:2181");
@@ -53,7 +53,7 @@ public class FlinkController implements Serializable {
                 .trigger(new MyTrigger())
                 .aggregate(new AverageAggregate());
 
-        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor2",  st -> {
+        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  st -> {
             Message m = new Message(0);
             m.setTmp(String.valueOf(st.f2.getTime()));
             m.setHour(st.f0);

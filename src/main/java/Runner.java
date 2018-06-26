@@ -9,7 +9,7 @@ import controllers.query1.Monitor;
 public class Runner {
 
     public static void main(String[] args) throws InterruptedException {
-        query2();
+        query1();
     }
 
     private static void query1() throws InterruptedException {
