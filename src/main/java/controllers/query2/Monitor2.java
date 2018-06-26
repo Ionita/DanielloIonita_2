@@ -12,24 +12,12 @@ import java.util.*;
 public class Monitor2 {
 
 
-    ArrayList<Query2_Item> query2_items;
+    private ArrayList<Query2_Item> query2_items;
     private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-    private Long firstTmp;
-    private ArrayList<Integer> tmpSlidingWindows;
     private Long OK_PACKETS = 0L;
     private Long DISCARDED_PACKETS = 0L;
 
-    private final String reference = "644564";
-
-
-
-    private Integer hour = -1;
-    private Integer day = 0;
-    private Integer week = 0;
-    private Integer lifetime = 0;
-
-
-    private Integer leftBoundaryHour;
+    private Integer leftBoundaryHour = -1;
     private Integer leftBoundaryDay;
     private Integer leftBoundaryWeek;
     private Integer leftBoundaryYear;
@@ -42,24 +30,6 @@ public class Monitor2 {
 
     private final Integer slidingWindowSize = 24;
 
-
-    public Monitor2(){
-        Thread thread1 = new Thread(() -> {
-            while (true) {
-                try {
-                    Thread.sleep(10000);
-                    System.out.println("OK_PACKETS: " + OK_PACKETS);
-                    System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread1.start();
-        KafkaConsumer kc = new KafkaConsumer();
-        kc.setAttributes(this);
-        kc.runConsumer("monitor_query2");
-    }
 
     /**
      * arriva un dato.
@@ -82,6 +52,24 @@ public class Monitor2 {
             //adding the value
             insertPostValue(m); //TODO <- parte importante da controllare
 
+    }
+
+    public Monitor2(){
+        Thread thread1 = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(10000);
+                    System.out.println("OK_PACKETS: " + OK_PACKETS);
+                    System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread1.start();
+        KafkaConsumer kc = new KafkaConsumer();
+        kc.setAttributes(this);
+        kc.runConsumer("monitor_query2");
     }
 
     private void setNewBoundaries(int positions){
@@ -117,7 +105,6 @@ public class Monitor2 {
 
     private void initialization(){
         query2_items = new ArrayList<>();
-        tmpSlidingWindows = new ArrayList<>();
     }
 
     private void fillFields(Message m){
@@ -131,13 +118,12 @@ public class Monitor2 {
     }
 
     private void checkFirstOne (Message m) {
-        if (hour == -1) {
+        if (leftBoundaryHour == -1) {
             initialization();
             if (slidingWindowSize > 24){
                 System.out.println("errore > 24");
                 return;
             }
-            hour = m.getHour();
             leftBoundaryHour = m.getHour();
             leftBoundaryDay = m.getDay();
             leftBoundaryWeek = m.getWeek();
@@ -168,8 +154,6 @@ public class Monitor2 {
         int messageWeek = m.getWeek();
         int messageYear = m.getYear();
 
-        //printBoundaries();
-
         Calendar left = Calendar.getInstance();
         left.set(Calendar.HOUR_OF_DAY, leftBoundaryHour);
         left.set(Calendar.DAY_OF_WEEK, leftBoundaryDay);
@@ -199,15 +183,11 @@ public class Monitor2 {
         //out left
         else if (Long.parseLong(m.getTmp()) < leftMillis){
             DISCARDED_PACKETS++;
-            printBoundaries();
-            printMessage(m);
             return false; // non si aggiunge il pacchetto
         }
         //out right
         else {
             //System.out.println("fuori a destra");
-            printBoundaries();
-            printMessage(m);
             OK_PACKETS++;
             int oldHour = leftBoundaryHour, oldDay = leftBoundaryDay, oldWeek = leftBoundaryWeek, oldYear = leftBoundaryYear;
 
@@ -225,12 +205,9 @@ public class Monitor2 {
             else{
                 //year change
 
-                difference = 0;
                 difference = messageHour + (24* (messageDay + 7 - rightBoundaryDay))-rightBoundaryHour;
                 setNewBoundaries(difference);
-                System.out.println("cambio anno \n\n\n\n"); // non ancora implementato ma ho visto che
-                                                            // il cambio della settimana così funziona
-                                                            // quindi probabilmente per l'anno è la stessa cosa
+                System.out.println("cambio anno \n\n\n\n");
             }
             slideToRight(difference, oldHour, oldDay, oldWeek, oldYear); // ruoto verso destra la finestra e
                                                                          // salvo i dati nelle prime colonne
@@ -279,16 +256,24 @@ public class Monitor2 {
                 q.getSlidingWindow().add(0);
             }
             //per ora stampo su schermo e basta
-            saveColumnToFile(0, temp, oldHour, oldDay, oldWeek, oldYear);
+            saveColumnToFile(temp, oldHour, oldDay, oldWeek, oldYear);
             //tmpSlidingWindows.remove(0);
         }
     }
 
-    private void saveColumnToFile(Integer tmp, Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
+    private void saveColumnToFile(Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
         try {
+            Calendar c = Calendar.getInstance();
+            c.set(Calendar.HOUR, oldHour);
+            c.set(Calendar.DAY_OF_WEEK, oldDay);
+            c.set(Calendar.WEEK_OF_YEAR, oldWeek);
+            c.set(Calendar.YEAR, oldYear);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+
             BufferedWriter br = new BufferedWriter(new FileWriter("query2.csv", true));
             StringBuilder sb = new StringBuilder();
-            sb.append(oldHour + ":" + oldDay + ":" + oldWeek + ":" + oldYear + " ");
+            sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
                 sb.append(", ");
                 sb.append(i);
@@ -301,11 +286,7 @@ public class Monitor2 {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //System.out.println("hour: " + oldHour + ", day: " + oldDay + ", week: " + oldWeek + ", year: " + oldYear + " - " +
-        //        Arrays.toString(temp));
     }
-
-
 
     private void insertPostValue (Message m) {
         //getting post id
@@ -332,7 +313,6 @@ public class Monitor2 {
                 int currentValue = item.getSlidingWindow().get(positionInWindow);
                 item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
             }
-            printWindow(item.getPost_id().toString(), reference, item.getSlidingWindow().toString());
         }
 
         //the item is in the array
@@ -350,7 +330,6 @@ public class Monitor2 {
                 int currentValue = query2_items.get(position).getSlidingWindow().get(positionInWindow);
                 query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
             }
-            printWindow(query2_items.get(position).getPost_id().toString(), reference, query2_items.get(position).getSlidingWindow().toString());
         }
     }
 
@@ -367,9 +346,11 @@ public class Monitor2 {
 
 
 
+
+
     private void printBoundaries(){
 
-/*        System.out.println("left boundaries: ");
+        System.out.println("left boundaries: ");
         System.out.println("hour: " + leftBoundaryHour
                 + ", day: " + leftBoundaryDay
                 + ", week: " + leftBoundaryWeek
@@ -380,32 +361,22 @@ public class Monitor2 {
                 + ", week: " + rightBoundaryWeek
                 + ", year: " + rightBoundaryYear);
         System.out.println("OK_PACKETS: " + OK_PACKETS);
-        System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);*/
+        System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
     }
 
     private void printMessage(Message m){
-/*        System.out.println("message: " + m.getPost_commented());
+        System.out.println("message: " + m.getPost_commented());
         System.out.println("hour: " + m.getHour()
                 + ", day: " + m.getDay()
                 + ", week: " + m.getWeek()
                 + ", year: " + m.getYear());
-        System.out.println("\n\n\n");*/
+        System.out.println("\n\n\n");
     }
 
-    private void printWindow(String id, String reference, String window){
-/*        if(id.equals(reference))
-            System.out.println("id: " + id + ", " + window);*/
+    private void printWindow(String id, String window){
+        String reference = "644564";
+        if(id.equals(reference))
+            System.out.println("id: " + id + ", " + window);
     }
 
-    private void printLoading(){
-        while(true){
-            try {
-                Thread.sleep(10000);
-                printBoundaries();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
 }
