@@ -16,6 +16,7 @@ public class Monitor2 {
     private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     private Long OK_PACKETS = 0L;
     private Long DISCARDED_PACKETS = 0L;
+    private int emptCyclesToCloseTheApp = 1;
 
     private Integer leftBoundaryHour = -1;
     private Integer leftBoundaryDay;
@@ -29,7 +30,6 @@ public class Monitor2 {
     private Integer rightBoundaryYear;
 
     private final Integer slidingWindowSize = 24;
-
 
     /**
      * arriva un dato.
@@ -56,15 +56,26 @@ public class Monitor2 {
 
     public Monitor2(){
         Thread thread1 = new Thread(() -> {
+            long current_ok_packets = OK_PACKETS;
+            int times = 0;
             while (true) {
                 try {
                     Thread.sleep(10000);
                     System.out.println("OK_PACKETS: " + OK_PACKETS);
                     System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
+                    if (OK_PACKETS == current_ok_packets)
+                        times ++;
+                    else
+                        times = 0;
+                    if(times == emptCyclesToCloseTheApp){
+                        break;
+                    }
+                    current_ok_packets = OK_PACKETS;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+            System.exit(0);
         });
         thread1.start();
         KafkaConsumer kc = new KafkaConsumer();
@@ -226,9 +237,11 @@ public class Monitor2 {
             oldHour ++;
             if(oldHour == 24){
                 oldHour -= 24;
+                saveDailyValues(oldDay, oldWeek, oldYear);
                 oldDay ++;
                 if(oldDay > 7){
                     oldDay -= 7;
+                    saveWeeklyValues(oldWeek, oldYear);
                     oldWeek ++;
                     if(oldWeek > 52){
                         oldWeek -= 52;
@@ -252,12 +265,12 @@ public class Monitor2 {
             }
             //rimuovo la prima colonna a tutti e aggiungo uno zero per mantenere costante la grandezza dell'array
             for (Query2_Item q : query2_items) {
+                q.setDailyValue(q.getDailyValue() + q.getFirstWindowPosition());
+                q.setWeekValue(q.getWeekValue() + q.getFirstWindowPosition());
                 q.getSlidingWindow().remove(0);
                 q.getSlidingWindow().add(0);
             }
-            //per ora stampo su schermo e basta
             saveColumnToFile(temp, oldHour, oldDay, oldWeek, oldYear);
-            //tmpSlidingWindows.remove(0);
         }
     }
 
@@ -342,6 +355,96 @@ public class Monitor2 {
             i++;
         }
         return -1;
+    }
+
+    private void saveDailyValues(int oldDay, int oldWeek, int oldYear){
+        query2_items.sort(Comparator.comparingInt(Query2_Item::getDailyValue).reversed());
+        Integer[] temp = new Integer[20];
+        int k = 0;
+        int maxValue = 10;
+        //prendo i primi dieci valori oppure tutti gli elementi dell'array se in numero inferiore
+        if (query2_items.size() < 10)
+            maxValue = query2_items.size();
+        //salvo i dieci valori in un array temporaneo insieme al loro id
+        for (int i = 0; i  < maxValue; i++){
+            temp[k] = query2_items.get(i).getPost_id().intValue();
+            temp[k+1] = query2_items.get(i).getDailyValue();
+            k += 2;
+        }
+        for (Query2_Item q : query2_items) {
+            q.setDailyValue(0);
+        }
+
+        try {
+            Calendar c = Calendar.getInstance();
+            c.set(Calendar.DAY_OF_WEEK, oldDay);
+            c.set(Calendar.WEEK_OF_YEAR, oldWeek);
+            c.set(Calendar.YEAR, oldYear);
+            c.set(Calendar.HOUR, 0);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+
+            BufferedWriter br = new BufferedWriter(new FileWriter("query2_daily.csv", true));
+            StringBuilder sb = new StringBuilder();
+            sb.append(dateFormat.format(c.getTimeInMillis()));
+            for(Integer i: temp){
+                sb.append(", ");
+                sb.append(i);
+            }
+            sb.append(System.lineSeparator());
+
+            br.write(sb.toString());
+            br.flush();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    private void saveWeeklyValues(int oldWeek, int oldYear){
+        query2_items.sort(Comparator.comparingInt(Query2_Item::getWeekValue).reversed());
+        Integer[] temp = new Integer[20];
+        int k = 0;
+        int maxValue = 10;
+        //prendo i primi dieci valori oppure tutti gli elementi dell'array se in numero inferiore
+        if (query2_items.size() < 10)
+            maxValue = query2_items.size();
+        //salvo i dieci valori in un array temporaneo insieme al loro id
+        for (int i = 0; i  < maxValue; i++){
+            temp[k] = query2_items.get(i).getPost_id().intValue();
+            temp[k+1] = query2_items.get(i).getWeekValue();
+            k += 2;
+        }
+        for (Query2_Item q : query2_items) {
+            q.setWeekValue(0);
+        }
+
+        try {
+            Calendar c = Calendar.getInstance();
+            c.set(Calendar.WEEK_OF_YEAR, oldWeek);
+            c.set(Calendar.YEAR, oldYear);
+            c.set(Calendar.DAY_OF_WEEK, 1);
+            c.set(Calendar.HOUR, 0);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+
+            BufferedWriter br = new BufferedWriter(new FileWriter("query2_weekly.csv", true));
+            StringBuilder sb = new StringBuilder();
+            sb.append(dateFormat.format(c.getTimeInMillis()));
+            for(Integer i: temp){
+                sb.append(", ");
+                sb.append(i);
+            }
+            sb.append(System.lineSeparator());
+
+            br.write(sb.toString());
+            br.flush();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
