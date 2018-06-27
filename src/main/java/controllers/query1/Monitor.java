@@ -119,13 +119,13 @@ public class Monitor {
                 dayHours[i] = 0;
 
             daily_query1results(dateFormat.format(firstTmpOfTheDay), day);
-            firstTmpOfTheDay = null;
+            firstTmpOfTheDay = new Date(Long.parseLong(m.getTmp()));
             day = 0;
             cday = m.getDay();
         }
         if (type > 2) {
             weekly_query1results(dateFormat.format(firstTmpOfTheWeek), week);
-            firstTmpOfTheWeek = null;
+            firstTmpOfTheWeek = new Date(Long.parseLong(m.getTmp()));
             week = 0;
             cweek = m.getWeek();
         }
