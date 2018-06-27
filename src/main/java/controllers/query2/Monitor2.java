@@ -68,14 +68,18 @@ public class Monitor2 {
                     else
                         times = 0;
                     if(times == emptCyclesToCloseTheApp){
-                        break;
+                        if(OK_PACKETS != 0)
+                            break;
                     }
                     current_ok_packets = OK_PACKETS;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            System.exit(0);
+            if(OK_PACKETS != 0) {
+                System.out.println("Error of " + (Double.valueOf(DISCARDED_PACKETS) / Double.valueOf(OK_PACKETS)) + "%");
+                System.exit(0);
+            }
         });
         thread1.start();
         KafkaConsumer kc = new KafkaConsumer();
@@ -316,15 +320,19 @@ public class Monitor2 {
             int currentDay = m.getDay();
 
             // message in the same day as left boundary
-            if (currentDay == leftBoundaryDay){
+            if (currentDay == leftBoundaryDay) {
                 int positionInWindow = currenthour - leftBoundaryHour;
-                int currentValue = item.getSlidingWindow().get(positionInWindow);
-                item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                if (positionInWindow >= 0) {
+                    int currentValue = item.getSlidingWindow().get(positionInWindow);
+                    item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                }
             }
-            else if (currentDay >= leftBoundaryDay + 1){
-                int positionInWindow = currenthour  + 23 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
-                int currentValue = item.getSlidingWindow().get(positionInWindow);
-                item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+            else if (currentDay >= leftBoundaryDay + 1) {
+                int positionInWindow = currenthour + 23 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
+                if (positionInWindow >= 0) {
+                    int currentValue = item.getSlidingWindow().get(positionInWindow);
+                    item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                }
             }
         }
 

@@ -169,6 +169,7 @@ public class KafkaController implements Serializer {
                     if (i%1000 == 0) {
                         KafkaBenchmark.getInstance().setBytePerMessage(toByteArray(m).length);
                         KafkaBenchmark.getInstance().setnMessages(i);
+                        i = 0;
                     }
                 }
                 catch (Exception e){

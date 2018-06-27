@@ -78,7 +78,7 @@ public class FlinkControllerQuery3 implements Serializable {
             else if (accumulator.f0.after(value.f0))
                 return new Tuple4<>(value.f0, value.f2, accumulator.f2 + 1, value.f3);
             else if (accumulator.f0.before(value.f0))
-                return new Tuple4<>(accumulator.f0, accumulator.f2, accumulator.f2 + 1, value.f3);
+                return new Tuple4<>(accumulator.f0, value.f2, accumulator.f2 + 1, value.f3);
             else
                 return new Tuple4<>(value.f0, value.f2, accumulator.f2 + 1, value.f3);
         }

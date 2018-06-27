@@ -30,10 +30,28 @@ public class Monitor {
     private int cweek = -1;
     private int cyear = -1;
 
+    private Date firstTmpOfTheDay = null;
     private Date firstTmpOfTheWeek = null;
+    private Date firstTmpInAbsolute = null;
 
 
     public Monitor(){
+        Thread thread1 = new Thread(() -> {
+            int currentTotalValue = lifetime;
+            while (true) {
+                try {
+                    Thread.sleep(10000);
+                    if(currentTotalValue == lifetime && lifetime != 0){
+                        lifetime_query(dateFormat.format(firstTmpInAbsolute), lifetime);
+                        System.exit(0);
+                    }
+                    currentTotalValue = lifetime;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread1.start();
         Arrays.fill(dayHours, 0);
         KafkaConsumer kc = new KafkaConsumer();
         kc.setAttributes(this);
@@ -46,10 +64,12 @@ public class Monitor {
         fillFields(m);
 
         //initialization
-        if (firstTmpOfTheWeek == null) {
+        if (firstTmpOfTheDay == null)
+            firstTmpOfTheDay = new Date(Long.parseLong(m.getTmp()));
+        if (firstTmpOfTheWeek == null)
             firstTmpOfTheWeek = new Date(Long.parseLong(m.getTmp()));
-            //System.out.println(firstTmpOfTheWeek.toString());
-        }
+        if (firstTmpInAbsolute== null)
+            firstTmpInAbsolute = new Date(Long.parseLong(m.getTmp()));
 
         if (chour == -1){
             chour = m.getHour();
@@ -94,15 +114,18 @@ public class Monitor {
             chour = m.getHour();
         }
         if (type > 1) {
-            query1Results(dateFormat.format(firstTmpOfTheWeek), dayHours);
+            query1Results(dateFormat.format(firstTmpOfTheDay), dayHours);
             for(int i = 0; i<24; i++)
                 dayHours[i] = 0;
 
-            firstTmpOfTheWeek = null;
+            daily_query1results(dateFormat.format(firstTmpOfTheDay), day);
+            firstTmpOfTheDay = null;
             day = 0;
             cday = m.getDay();
         }
         if (type > 2) {
+            weekly_query1results(dateFormat.format(firstTmpOfTheWeek), week);
+            firstTmpOfTheWeek = null;
             week = 0;
             cweek = m.getWeek();
         }
@@ -127,6 +150,51 @@ public class Monitor {
             sb.append(System.lineSeparator());
 
             br.write(sb.toString());
+            br.flush();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void daily_query1results(String ts, Integer day){
+        try {
+            BufferedWriter br = new BufferedWriter(new FileWriter("query1_daily.csv", true));
+            String sb = ts +
+                    ", " +
+                    day +
+                    System.lineSeparator();
+            br.write(sb);
+            br.flush();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void weekly_query1results(String ts, Integer week){
+        try {
+            BufferedWriter br = new BufferedWriter(new FileWriter("query1_weekly.csv", true));
+            String sb = ts +
+                    ", " +
+                    week +
+                    System.lineSeparator();
+            br.write(sb);
+            br.flush();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void lifetime_query(String ts, Integer lifetime){
+        try {
+            BufferedWriter br = new BufferedWriter(new FileWriter("query1_lifetime.csv", true));
+            String sb = ts +
+                    ", " +
+                    lifetime +
+                    System.lineSeparator();
+            br.write(sb);
             br.flush();
             br.close();
         } catch (IOException e) {

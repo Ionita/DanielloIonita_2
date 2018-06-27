@@ -28,7 +28,7 @@ public class FlinkControllerQuery2 implements Serializable {
 
     private static String INPUT_KAFKA_TOPIC = null;
     private Integer currentHour = -1;
-    private Date accumulatorDate = null;
+
 
     public void calculateQuery2() throws Exception {
 
@@ -123,11 +123,12 @@ public class FlinkControllerQuery2 implements Serializable {
             if (currentHour == -1)
                 currentHour = tuple.f1;
 
-            if (tuple.f1.equals(currentHour))
+            if (tuple.f1 >= currentHour) {
+                if(tuple.f1 > currentHour)
+                    currentHour = tuple.f1;
                 return TriggerResult.CONTINUE;
-
+            }
             else {
-                currentHour = tuple.f1;
                 return TriggerResult.FIRE_AND_PURGE;
             }
 
