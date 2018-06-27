@@ -139,7 +139,7 @@ public class Monitor {
     private void query1Results (String ts, Integer[] value) {
 
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter("query1.csv", true));
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(ts);
             for (Integer element: value) {
@@ -159,7 +159,7 @@ public class Monitor {
 
     private void daily_query1results(String ts, Integer day){
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter("query1_daily.csv", true));
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_daily.csv", true));
             String sb = ts +
                     ", " +
                     day +
@@ -174,7 +174,7 @@ public class Monitor {
 
     private void weekly_query1results(String ts, Integer week){
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter("query1_weekly.csv", true));
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_weekly.csv", true));
             String sb = ts +
                     ", " +
                     week +
@@ -189,7 +189,7 @@ public class Monitor {
 
     private void lifetime_query(String ts, Integer lifetime){
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter("query1_lifetime.csv", true));
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_lifetime.csv", true));
             String sb = ts +
                     ", " +
                     lifetime +

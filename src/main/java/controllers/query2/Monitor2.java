@@ -77,7 +77,7 @@ public class Monitor2 {
                 }
             }
             if(OK_PACKETS != 0) {
-                System.out.println("Error of " + (Double.valueOf(DISCARDED_PACKETS) / Double.valueOf(OK_PACKETS)) + "%");
+                System.out.println("Error of " + ((Double.valueOf(DISCARDED_PACKETS) * 100) / Double.valueOf(OK_PACKETS)) + "%");
                 System.exit(0);
             }
         });
@@ -278,33 +278,6 @@ public class Monitor2 {
         }
     }
 
-    private void saveColumnToFile(Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
-        try {
-            Calendar c = Calendar.getInstance();
-            c.set(Calendar.HOUR, oldHour);
-            c.set(Calendar.DAY_OF_WEEK, oldDay);
-            c.set(Calendar.WEEK_OF_YEAR, oldWeek);
-            c.set(Calendar.YEAR, oldYear);
-            c.set(Calendar.MINUTE, 0);
-            c.set(Calendar.SECOND, 0);
-
-            BufferedWriter br = new BufferedWriter(new FileWriter("query2.csv", true));
-            StringBuilder sb = new StringBuilder();
-            sb.append(dateFormat.format(c.getTimeInMillis()));
-            for(Integer i: temp){
-                sb.append(", ");
-                sb.append(i);
-            }
-            sb.append(System.lineSeparator());
-
-            br.write(sb.toString());
-            br.flush();
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void insertPostValue (Message m) {
         //getting post id
         Long postID = m.getPost_commented();
@@ -365,6 +338,33 @@ public class Monitor2 {
         return -1;
     }
 
+    private void saveColumnToFile(Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
+        try {
+            Calendar c = Calendar.getInstance();
+            c.set(Calendar.HOUR, oldHour);
+            c.set(Calendar.DAY_OF_WEEK, oldDay);
+            c.set(Calendar.WEEK_OF_YEAR, oldWeek);
+            c.set(Calendar.YEAR, oldYear);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2.csv", true));
+            StringBuilder sb = new StringBuilder();
+            sb.append(dateFormat.format(c.getTimeInMillis()));
+            for(Integer i: temp){
+                sb.append(", ");
+                sb.append(i);
+            }
+            sb.append(System.lineSeparator());
+
+            br.write(sb.toString());
+            br.flush();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void saveDailyValues(int oldDay, int oldWeek, int oldYear){
         query2_items.sort(Comparator.comparingInt(Query2_Item::getDailyValue).reversed());
         Integer[] temp = new Integer[20];
@@ -392,7 +392,7 @@ public class Monitor2 {
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
-            BufferedWriter br = new BufferedWriter(new FileWriter("query2_daily.csv", true));
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2_daily.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
@@ -438,7 +438,7 @@ public class Monitor2 {
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
-            BufferedWriter br = new BufferedWriter(new FileWriter("query2_weekly.csv", true));
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2_weekly.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
