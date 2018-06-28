@@ -176,6 +176,7 @@ public class KafkaController implements Serializer {
                     checkErrors(bufferReading, type);
                 }
             }
+            KafkaBenchmark.getInstance().setnMessages(i);
 
         } catch (IOException e) {
             e.printStackTrace();

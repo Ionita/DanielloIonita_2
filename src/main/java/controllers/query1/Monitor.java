@@ -15,7 +15,7 @@ public class Monitor {
 
     private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
-    private Integer hour = -1;
+    private Integer hour = 0;
     private Integer day = 0;
     private Integer week = 0;
     private Integer lifetime = 0;

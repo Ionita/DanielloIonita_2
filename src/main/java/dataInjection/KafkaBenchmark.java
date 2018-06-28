@@ -30,6 +30,7 @@ class KafkaBenchmark {
     }
 
     void stopAll(){
+        totalMessages += nMessages;
         System.out.println("Final: Packets sent: \t" + totalMessages);
         System.out.println("Final_:Time spent in seconds: \t" + totalTime/1000);
         System.out.println("Final: Average rate: \t" + (totalMessages*bytePerMessage/1000)/totalTime + " MB/s");
