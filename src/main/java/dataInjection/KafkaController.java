@@ -94,35 +94,42 @@ public class KafkaController implements Serializer {
         KafkaBenchmark.getInstance().startThread();
 
         if (type == 1){
-            Thread thread1 = new Thread(() -> {
+            //Thread thread1 = new Thread(() -> {
                 readData("/home/simone/IdeaProjects/DanielloIonita_2/data/friendships.dat", 0);
-            });
-            thread1.start();
-            thread1.join();
+            //});
+            //thread1.start();
+            //thread1.join();
         }
         else if(type == 2){
-            Thread thread3 = new Thread(() -> {
+            //Thread thread3 = new Thread(() -> {
                 readData("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat", 2);
-            });
-            thread3.start();
-            thread3.join();
+            //});
+            //thread3.start();
+            //thread3.join();
         }
         else {
-            Thread thread2 = new Thread(() -> {
+            //Thread thread2 = new Thread(() -> {
                 try {
                     sendQuery3Data("/home/simone/IdeaProjects/DanielloIonita_2/query3_file.txt");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            });
-            thread2.start();
-            thread2.join();
+            //});
+            //thread2.start();
+            //thread2.join();
         }
         KafkaBenchmark.getInstance().stopAll();
 
     }
 
     private void readData(String filepath, Integer type) {
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         int i=0;
         int j = 1;
         String line;
