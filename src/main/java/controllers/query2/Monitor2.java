@@ -78,6 +78,7 @@ public class Monitor2 {
             }
             if(OK_PACKETS != 0) {
                 System.out.println("Error of " + ((Double.valueOf(DISCARDED_PACKETS) * 100) / Double.valueOf(OK_PACKETS)) + "%");
+                slideToRight(slidingWindowSize, leftBoundaryHour, leftBoundaryDay, leftBoundaryWeek, leftBoundaryYear);
                 System.exit(0);
             }
         });
@@ -123,7 +124,7 @@ public class Monitor2 {
     }
 
     private void fillFields(Message m){
-        Calendar c = Calendar.getInstance();
+        Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
         c.setTimeInMillis(Long.parseLong(m.getTmp()));
         m.setHour(c.get(Calendar.HOUR_OF_DAY));
         m.setDay(c.get(Calendar.DAY_OF_WEEK));
@@ -143,6 +144,20 @@ public class Monitor2 {
             leftBoundaryDay = m.getDay();
             leftBoundaryWeek = m.getWeek();
             leftBoundaryYear = m.getYear();
+            /*CANCELLA*/
+            System.out.println("setto left boundary a : \n " +
+                    "day : " + leftBoundaryDay + ", hour: " + leftBoundaryHour + ", week: " + leftBoundaryWeek + ", year: " + leftBoundaryYear + "\n" +
+                    "tmp of the packet: " + m.getTmp() + ", id packet: " + m.getPost_commented());
+
+            Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
+            c.set(Calendar.WEEK_OF_YEAR, leftBoundaryWeek);
+            c.set(Calendar.YEAR, leftBoundaryYear);
+            c.set(Calendar.DAY_OF_WEEK, leftBoundaryDay);
+            c.set(Calendar.HOUR_OF_DAY, leftBoundaryHour);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+            System.out.println(dateFormat.format(c.getTimeInMillis()));
+            /*CANCELLA*/
 
             rightBoundaryHour = leftBoundaryHour + slidingWindowSize;
             rightBoundaryDay = leftBoundaryDay;
@@ -169,7 +184,7 @@ public class Monitor2 {
         int messageWeek = m.getWeek();
         int messageYear = m.getYear();
 
-        Calendar left = Calendar.getInstance();
+        Calendar left = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
         left.set(Calendar.HOUR_OF_DAY, leftBoundaryHour);
         left.set(Calendar.DAY_OF_WEEK, leftBoundaryDay);
         left.set(Calendar.WEEK_OF_YEAR, leftBoundaryWeek);
@@ -177,7 +192,7 @@ public class Monitor2 {
 
         long leftMillis = left.getTimeInMillis();
 
-        Calendar right = Calendar.getInstance();
+        Calendar right = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
         right.set(Calendar.HOUR_OF_DAY, rightBoundaryHour);
         right.set(Calendar.DAY_OF_WEEK, rightBoundaryDay);
         right.set(Calendar.WEEK_OF_YEAR, rightBoundaryWeek);
@@ -236,8 +251,8 @@ public class Monitor2 {
         //salvo tante colonne quanto è lo spostamento verso destra. faccio la stessa operazione di quando
         // setto le nuove boundaries. è brutto ma non so come fare altrimenti. Per ora questa operazione
         // server solamente a stampare il timestamp di riferimento
+        oldHour--;
         for(int j = 0; j < difference; j++) {
-
             oldHour ++;
             if(oldHour == 24){
                 oldHour -= 24;
@@ -301,11 +316,13 @@ public class Monitor2 {
                 }
             }
             else if (currentDay >= leftBoundaryDay + 1) {
-                int positionInWindow = currenthour + 23 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
+                int positionInWindow = currenthour + 24 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
                 if (positionInWindow >= 0) {
                     int currentValue = item.getSlidingWindow().get(positionInWindow);
                     item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
                 }
+                else
+                    System.out.println("position in window: " + positionInWindow);
             }
         }
 
@@ -316,13 +333,19 @@ public class Monitor2 {
             // message in the same day as left boundary
             if (currentDay == leftBoundaryDay){
                 int positionInWindow = currenthour - leftBoundaryHour;
-                int currentValue = query2_items.get(position).getSlidingWindow().get(positionInWindow);
-                query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                if (positionInWindow >= 0) {
+                    int currentValue = query2_items.get(position).getSlidingWindow().get(positionInWindow);
+                    query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                }
             }
             else if (currentDay >= leftBoundaryDay + 1){
-                int positionInWindow = currenthour  + 23 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
-                int currentValue = query2_items.get(position).getSlidingWindow().get(positionInWindow);
-                query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                int positionInWindow = currenthour  + 24 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
+                if (positionInWindow >= 0) {
+                    int currentValue = query2_items.get(position).getSlidingWindow().get(positionInWindow);
+                    query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                }
+                else
+                    System.out.println("position in window: " + positionInWindow);
             }
         }
     }
@@ -339,29 +362,32 @@ public class Monitor2 {
     }
 
     private void saveColumnToFile(Integer[] temp, int oldHour, int oldDay, int oldWeek, int oldYear) {
-        try {
-            Calendar c = Calendar.getInstance();
-            c.set(Calendar.HOUR, oldHour);
-            c.set(Calendar.DAY_OF_WEEK, oldDay);
-            c.set(Calendar.WEEK_OF_YEAR, oldWeek);
-            c.set(Calendar.YEAR, oldYear);
-            c.set(Calendar.MINUTE, 0);
-            c.set(Calendar.SECOND, 0);
+        if(temp[1] != 0) {
+            try {
 
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2.csv", true));
-            StringBuilder sb = new StringBuilder();
-            sb.append(dateFormat.format(c.getTimeInMillis()));
-            for(Integer i: temp){
-                sb.append(", ");
-                sb.append(i);
+                Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
+                c.set(Calendar.HOUR_OF_DAY, oldHour);
+                c.set(Calendar.DAY_OF_WEEK, oldDay);
+                c.set(Calendar.WEEK_OF_YEAR, oldWeek);
+                c.set(Calendar.YEAR, oldYear);
+                c.set(Calendar.MINUTE, 0);
+                c.set(Calendar.SECOND, 0);
+
+                BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2.csv", true));
+                StringBuilder sb = new StringBuilder();
+                sb.append(dateFormat.format(c.getTimeInMillis()));
+                for (Integer i : temp) {
+                    sb.append(", ");
+                    sb.append(i);
+                }
+                sb.append(System.lineSeparator());
+
+                br.write(sb.toString());
+                br.flush();
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            sb.append(System.lineSeparator());
-
-            br.write(sb.toString());
-            br.flush();
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -384,11 +410,11 @@ public class Monitor2 {
         }
 
         try {
-            Calendar c = Calendar.getInstance();
+            Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
             c.set(Calendar.DAY_OF_WEEK, oldDay);
             c.set(Calendar.WEEK_OF_YEAR, oldWeek);
             c.set(Calendar.YEAR, oldYear);
-            c.set(Calendar.HOUR, 0);
+            c.set(Calendar.HOUR_OF_DAY, 0);
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
@@ -430,11 +456,11 @@ public class Monitor2 {
         }
 
         try {
-            Calendar c = Calendar.getInstance();
+            Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
             c.set(Calendar.WEEK_OF_YEAR, oldWeek);
             c.set(Calendar.YEAR, oldYear);
             c.set(Calendar.DAY_OF_WEEK, 1);
-            c.set(Calendar.HOUR, 0);
+            c.set(Calendar.HOUR_OF_DAY, 0);
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 

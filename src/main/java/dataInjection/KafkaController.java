@@ -124,11 +124,6 @@ public class KafkaController implements Serializer {
 
     private void readData(String filepath, Integer type) {
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         int i=0;
         int j = 1;

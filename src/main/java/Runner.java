@@ -9,7 +9,7 @@ import controllers.query1.Monitor;
 public class Runner {
 
     public static void main(String[] args) throws InterruptedException {
-        query1();
+        query2();
     }
 
     private static void query1() throws InterruptedException {
@@ -70,8 +70,14 @@ public class Runner {
 
 
         thread_monitor_query2.start();
-        thread_kafka_injection.start();
         thread_query2.start();
+        try {
+            Thread.sleep(20000);
+            System.out.println("starting sending messages on kafka topic");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        thread_kafka_injection.start();
 
         thread_kafka_injection.join();
         thread_query2.join();

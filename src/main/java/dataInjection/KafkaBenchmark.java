@@ -17,6 +17,7 @@ class KafkaBenchmark {
     private long startTime = 0L;
     private long endtime = 0L;
     private boolean stopAll = false;
+    private Integer messagesThatHasToBeSent;
 
 
     private KafkaBenchmark(){}

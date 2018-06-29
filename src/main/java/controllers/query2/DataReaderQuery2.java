@@ -38,7 +38,6 @@ public class DataReaderQuery2 {
                 data.setComment(jsonRecord.get("comment").getAsString());
                 data.setUser_name(jsonRecord.get("user_name").getAsString());
                 if (jsonRecord.get("comment_replied").isJsonNull() && !jsonRecord.get("post_commented").isJsonNull()) {
-
                     data.setComment_replied(null);
                     data.setPost_commented(jsonRecord.get("post_commented").getAsLong());
                 }

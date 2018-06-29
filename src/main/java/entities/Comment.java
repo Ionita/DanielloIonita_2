@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 public class Comment {
     private Date tmp;
@@ -22,7 +23,7 @@ public class Comment {
 
     public void setTmp(Date tmp) {
         this.tmp = tmp;
-        Calendar c = GregorianCalendar.getInstance();
+        Calendar c = GregorianCalendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
         c.setTime(tmp);
         setHour(c.get(Calendar.HOUR_OF_DAY));    }
 
