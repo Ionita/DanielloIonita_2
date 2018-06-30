@@ -262,8 +262,19 @@ public class Monitor2 {
                     oldDay -= 7;
                     saveWeeklyValues(oldWeek, oldYear);
                     oldWeek ++;
-                    if(oldWeek > 52){
-                        oldWeek -= 52;
+
+
+                    Calendar cal = Calendar.getInstance();
+                    cal.set(Calendar.YEAR, oldYear);
+                    cal.set(Calendar.MONTH, Calendar.DECEMBER);
+                    cal.set(Calendar.DAY_OF_MONTH, 31);
+
+                    int ordinalDay = cal.get(Calendar.DAY_OF_YEAR);
+                    int weekDay = cal.get(Calendar.DAY_OF_WEEK) - 1; // Sunday = 0
+                    int numberOfWeeks = (ordinalDay - weekDay + 10) / 7;
+
+                    if(oldWeek > numberOfWeeks){
+                        oldWeek -= numberOfWeeks;
                         oldYear++;
                     }
                 }

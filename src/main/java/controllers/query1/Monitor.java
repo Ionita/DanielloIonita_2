@@ -124,7 +124,7 @@ public class Monitor {
             cday = m.getDay();
         }
         if (type > 2) {
-            weekly_query1results(dateFormat.format(firstTmpOfTheWeek), week);
+            weekly_query1results(dateFormat.format(firstTmpOfTheWeek), week, firstTmpOfTheWeek);
             firstTmpOfTheWeek = new Date(Long.parseLong(m.getTmp()));
             week = 0;
             cweek = m.getWeek();
@@ -172,7 +172,7 @@ public class Monitor {
         }
     }
 
-    private void weekly_query1results(String ts, Integer week){
+    private void weekly_query1results(String ts, Integer week, Date firstTmpOfTheWeek){
         try {
             BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_weekly.csv", true));
             String sb = ts +
@@ -182,6 +182,11 @@ public class Monitor {
             br.write(sb);
             br.flush();
             br.close();
+
+            Calendar c = Calendar.getInstance();
+            c.setTime(firstTmpOfTheWeek);
+            System.out.println("week: " + c.get(Calendar.WEEK_OF_YEAR) + ", timestamp: " + ts + ", value: " + week);
+
         } catch (IOException e) {
             e.printStackTrace();
         }

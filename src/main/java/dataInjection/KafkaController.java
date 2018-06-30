@@ -167,6 +167,13 @@ public class KafkaController implements Serializer {
 
                     i++;
 
+                    //CANCELLA
+                    try {
+                        Thread.sleep(15);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    //CANCELLA
                     this.sendMessage(m, topicToSend);
                     if (i%1000 == 0) {
                         KafkaBenchmark.getInstance().setBytePerMessage(toByteArray(m).length);
