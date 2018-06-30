@@ -5,11 +5,26 @@ import entities.Comment;
 import entities.Message;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.io.FilePathFilter;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.io.TextInputFormat;
 import org.apache.flink.api.java.operators.AggregateOperator;
 import org.apache.flink.api.java.tuple.*;
+import org.apache.flink.core.fs.Path;
+import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.IterativeStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.source.ContinuousFileMonitoringFunction;
+import org.apache.flink.streaming.api.functions.source.FileProcessingMode;
+import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
 import org.apache.flink.util.Collector;
 
 import java.io.BufferedReader;
@@ -21,6 +36,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 public class FlinkFile {
 
@@ -30,6 +46,8 @@ public class FlinkFile {
     private static String INPUT_KAFKA_TOPIC = null;
     private static Integer currentHour = -1;
     private static ReentrantLock lock = new ReentrantLock();
+    private static int countToDelete = 0;
+
 
     public void calculateQuery2() throws Exception {
 
@@ -39,31 +57,38 @@ public class FlinkFile {
         properties.setProperty("zookeeper.connect", "localhost:2181");
         String randomId = UUID.randomUUID().toString();
         properties.setProperty("group.id", randomId);
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<String> stream = env.readTextFile("file:///Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat");
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
+        DataStreamSource<String> stream =
+                env.readTextFile("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat");
 
         //System.out.println("got sources");
-        DataSet<Tuple4<Date, Integer, Long, Integer>> streamTuples = stream.flatMap(new Message2Tuple());
+        SingleOutputStreamOperator<Tuple3<Date, Integer, Long>> streamTuples =
+                stream.flatMap(new Message2Tuple());
 
-        AggregateOperator<Tuple4<Date, Integer, Long, Integer>> resultStream =
+        //streamTuples.print();
+
+
+        SingleOutputStreamOperator<Tuple3<Date, Long, Long>> resultStream =
                 streamTuples
-                        .groupBy(2)
-                        .sum(3);
-                        //.window(GlobalWindows.create())
-                        //.trigger(new MyTrigger())
-                        //.aggregate(new AverageAggregate());
+                        .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<Tuple3<Date, Integer, Long>>(Time.hours(1)) {
+                            @Override
+                            public long extractTimestamp(Tuple3<Date, Integer, Long> element) {
+                                return element.f0.getTime();
+                            }
+                        })
+                        .keyBy(2)
+                        .timeWindow(Time.hours(1))
+                        .aggregate(new AverageAggregate());
 
-        resultStream.print();
-
-        /*resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor_query2",  st -> {
-            Message m = new Message(2);
+        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor_query2", st -> {
+            Message m = new Message();
             m.setTmp(String.valueOf(st.f0.getTime()));
             m.setPost_commented(st.f1);
             m.setCount(st.f2);
-            //System.out.println("invio con tmp: " + m.getTmp());
             return new Gson().toJson(m).getBytes();
-        }));*/
+        }));
 
         env.execute("Query 2 Real-Time Classification");
 
@@ -105,17 +130,16 @@ public class FlinkFile {
         }
     }
 
-    public static class Message2Tuple implements FlatMapFunction<String, Tuple4<Date, Integer, Long, Integer>> {
+    public static class Message2Tuple implements FlatMapFunction<String, Tuple3<Date, Integer, Long>> {
 
         @Override
-        public void flatMap(String jsonString, Collector<Tuple4<Date, Integer, Long, Integer>> out) {
+        public void flatMap(String jsonString, Collector<Tuple3<Date, Integer, Long>> out) {
             ArrayList<Comment> recs = newDataReaderQuery2(jsonString);
             Iterator irecs = recs.iterator();
 
             while (irecs.hasNext()) {
                 Comment record = (Comment) irecs.next();
-                Tuple4 tp3 = new Tuple4<>(record.getTmp(), record.getHour(), record.getPost_commented(), 1);
-
+                Tuple3 tp3 = new Tuple3<>(record.getTmp(), record.getHour(), record.getPost_commented());
                 out.collect(tp3);
             }
         }
@@ -123,31 +147,57 @@ public class FlinkFile {
 
     private static ArrayList<Comment>  newDataReaderQuery2 (String line) {
 
-        int i = 0;
-        int j = 1;
         String cvsSplitBy = "\\|";
         ArrayList<Comment> comments = new ArrayList<>();
 
-                String[] bufferReading = line.split(cvsSplitBy, -1);
+        String[] bufferReading = line.split(cvsSplitBy, -1);
+        //System.out.println(Arrays.toString(bufferReading));
 
-                // use comma as separator
-                Comment m = new Comment();
+        // use comma as separator
+        Comment m = new Comment();
         try {
             m.setTmp(new SimpleDateFormat(dateFormat).parse(bufferReading[0]));
         } catch (ParseException e) {
             e.printStackTrace();
         }
         m.setComment_id(Long.valueOf(bufferReading[1]));
-                m.setUser_id(Long.valueOf(bufferReading[2]));
-                m.setComment(bufferReading[3]);
-                m.setUser_name(bufferReading[4]);
-                if (bufferReading[5].equals("") || bufferReading[5].equals(" ")) {
-                    m.setComment_replied(null);
-                    m.setPost_commented(Long.valueOf(bufferReading[6]));
-                    comments.add(m);
-                }
+        m.setUser_id(Long.valueOf(bufferReading[2]));
+        m.setComment(bufferReading[3]);
+        m.setUser_name(bufferReading[4]);
+        if (bufferReading[5].equals("") || bufferReading[5].equals(" ")) {
+            m.setComment_replied(null);
+            m.setPost_commented(Long.valueOf(bufferReading[6]));
+            //System.out.println("aggiungo tupla");
+            comments.add(m);
+        }
 
         return  comments;
+    }
+
+    public static final class Tokenizer implements FlatMapFunction<String, Tuple3<Date, Integer, Long>> {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void flatMap(String value, Collector<Tuple3<Date, Integer, Long>> out) throws Exception {
+            // normalize and split the line
+            String[] bufferReading = value.toLowerCase().split("\\|");
+            Comment m = new Comment();
+            try {
+                m.setTmp(new SimpleDateFormat(dateFormat).parse(bufferReading[0]));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            m.setComment_id(Long.valueOf(bufferReading[1]));
+            m.setUser_id(Long.valueOf(bufferReading[2]));
+            m.setComment(bufferReading[3]);
+            m.setUser_name(bufferReading[4]);
+            if (bufferReading[5].equals("") || bufferReading[5].equals(" ")) {
+                m.setComment_replied(null);
+                m.setPost_commented(Long.valueOf(bufferReading[6]));
+                out.collect(new Tuple3<>(m.getTmp(), m.getHour(), m.getPost_commented()));
+            }
+
+        }
     }
 
 
