@@ -1,7 +1,6 @@
-package controllers.query2;
+package controllers.query2.stream_kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import controllers.query1.Monitor;
 import entities.Message;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;

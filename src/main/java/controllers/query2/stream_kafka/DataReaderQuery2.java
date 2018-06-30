@@ -1,4 +1,4 @@
-package controllers.query2;
+package controllers.query2.stream_kafka;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

@@ -1,5 +1,7 @@
-package controllers.query2;
+package controllers.query2.stream_batch;
 
+import controllers.query2.stream_kafka.KafkaConsumer;
+import controllers.query2.stream_kafka.Query2_Item;
 import entities.Message;
 
 import java.io.BufferedWriter;
@@ -7,10 +9,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.TimeZone;
 
-public class Monitor2 {
+public class MonitorBatch2 {
 
+    private static MonitorBatch2 instance = new MonitorBatch2();
 
     private ArrayList<Query2_Item> query2_items;
     private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
@@ -54,7 +60,11 @@ public class Monitor2 {
 
     }
 
-    public Monitor2(){
+    public static MonitorBatch2 getInstance(){
+        return instance;
+    }
+
+    private MonitorBatch2(){
         Thread thread1 = new Thread(() -> {
             long current_ok_packets = OK_PACKETS;
             int times = 0;
@@ -83,9 +93,6 @@ public class Monitor2 {
             }
         });
         thread1.start();
-        KafkaConsumer kc = new KafkaConsumer();
-        kc.setAttributes(this);
-        kc.runConsumer("monitor_query2");
     }
 
     private void setNewBoundaries(int positions){
@@ -240,8 +247,8 @@ public class Monitor2 {
                 System.out.println("cambio anno \n\n\n\n");
             }
             slideToRight(difference, oldHour, oldDay, oldWeek, oldYear); // ruoto verso destra la finestra e
-                                                                         // salvo i dati nelle prime colonne
-                                                                         // guarda bene soprattutto questa funzione
+            // salvo i dati nelle prime colonne
+            // guarda bene soprattutto questa funzione
             return true;
         }
 
@@ -490,41 +497,6 @@ public class Monitor2 {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-
-
-
-
-    private void printBoundaries(){
-
-        System.out.println("left boundaries: ");
-        System.out.println("hour: " + leftBoundaryHour
-                + ", day: " + leftBoundaryDay
-                + ", week: " + leftBoundaryWeek
-                + ", year: " + leftBoundaryYear);
-        System.out.println("right boundaries: ");
-        System.out.println("hour: " + rightBoundaryHour
-                + ", day: " + rightBoundaryDay
-                + ", week: " + rightBoundaryWeek
-                + ", year: " + rightBoundaryYear);
-        System.out.println("OK_PACKETS: " + OK_PACKETS);
-        System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
-    }
-
-    private void printMessage(Message m){
-        System.out.println("message: " + m.getPost_commented());
-        System.out.println("hour: " + m.getHour()
-                + ", day: " + m.getDay()
-                + ", week: " + m.getWeek()
-                + ", year: " + m.getYear());
-        System.out.println("\n\n\n");
-    }
-
-    private void printWindow(String id, String window){
-        String reference = "644564";
-        if(id.equals(reference))
-            System.out.println("id: " + id + ", " + window);
     }
 
 }
