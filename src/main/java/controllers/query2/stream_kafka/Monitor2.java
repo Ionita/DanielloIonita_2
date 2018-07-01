@@ -107,7 +107,7 @@ public class Monitor2 {
         rightBoundaryHour += positions;
         while(rightBoundaryHour > 23){
             rightBoundaryHour -= 24;
-            rightBoundaryDay = rightBoundaryDay + 1;
+            rightBoundaryDay ++;
             while(rightBoundaryDay > 7){
                 rightBoundaryDay -= 7;
                 rightBoundaryWeek ++;
@@ -248,9 +248,6 @@ public class Monitor2 {
     }
 
     private void slideToRight(int difference, int oldHour, int oldDay, int oldWeek, int oldYear){
-        //salvo tante colonne quanto è lo spostamento verso destra. faccio la stessa operazione di quando
-        // setto le nuove boundaries. è brutto ma non so come fare altrimenti. Per ora questa operazione
-        // server solamente a stampare il timestamp di riferimento
         oldHour--;
         for(int j = 0; j < difference; j++) {
             oldHour ++;
@@ -279,7 +276,6 @@ public class Monitor2 {
                     }
                 }
             }
-            //ordino i dati (reverse per avere ordine decrescente)
             query2_items.sort(Comparator.comparingInt(Query2_Item::getFirstWindowPosition).reversed());
             Integer[] temp = new Integer[20];
             int k = 0;

@@ -49,9 +49,10 @@ public class FlinkControllerQuery2 implements Serializable {
         //System.out.println("got sources");
         DataStream<Tuple3<Date, Integer, Long>> streamTuples = stream.flatMap(new Message2Tuple());
 
+        //streamTuples.print();
         SingleOutputStreamOperator<Tuple3<Date, Long, Long>> resultStream =
                 streamTuples
-                        .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<Tuple3<Date, Integer, Long>>(Time.hours(1)) {
+                        .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<Tuple3<Date, Integer, Long>>(Time.hours(23)) {
                             @Override
                             public long extractTimestamp(Tuple3<Date, Integer, Long> element) {
                                 return element.f0.getTime();

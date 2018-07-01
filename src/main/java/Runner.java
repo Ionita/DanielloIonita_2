@@ -1,7 +1,8 @@
 import controllers.query1.FlinkController;
 import controllers.query2.stream_batch.FlinkFile;
 import controllers.query2.stream_kafka.Monitor2;
-import controllers.query3.FlinkControllerQuery3;
+import controllers.query3.stream.FlinkControllerQuery3;
+import controllers.query3.stream.Monitor3;
 import dataInjection.KafkaController;
 import controllers.query1.Monitor;
 
@@ -9,7 +10,7 @@ import controllers.query1.Monitor;
 public class Runner {
 
     public static void main(String[] args) throws InterruptedException {
-        query2();
+        query3();
     }
 
     private static void query1() throws InterruptedException {
@@ -111,11 +112,23 @@ public class Runner {
             }
         });
 
-        thread_kafka_injection.start();
+        Thread thread_monitor_query3 = new Thread(Monitor3::new);
+
+        thread_monitor_query3.start();
         thread_query3.start();
+        try {
+            Thread.sleep(20000);
+            System.out.println("starting sending messages on kafka topic");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        thread_kafka_injection.start();
+
 
         thread_kafka_injection.join();
         thread_query3.join();
+        thread_monitor_query3.join();
+
 
     }
 

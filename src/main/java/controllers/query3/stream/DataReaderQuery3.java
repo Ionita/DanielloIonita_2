@@ -1,4 +1,4 @@
-package controllers.query3;
+package controllers.query3.stream;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

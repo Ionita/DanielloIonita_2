@@ -44,7 +44,7 @@ public class FlinkFile {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
-                env.readTextFile("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat");
+                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat");
 
         SingleOutputStreamOperator<Tuple3<Date, Integer, Long>> streamTuples =
                 stream.flatMap(new Tokenizer());
@@ -65,8 +65,8 @@ public class FlinkFile {
                 })
                 .keyBy(2)
                 .timeWindow(Time.hours(1))
-                .aggregate(new AverageAggregate())
-        .setParallelism(4);
+                .aggregate(new AverageAggregate());
+        //.setParallelism(1);
 
 /*        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor_query2", st -> {
             Message m = new Message();
