@@ -1,6 +1,6 @@
 package controllers.query2.stream_batch;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.google.gson.Gson;
 import entities.Message;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -10,10 +10,13 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks;
+import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
 import org.apache.flink.util.Collector;
 
+import javax.annotation.Nullable;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -22,20 +25,16 @@ public class FlinkFile {
 
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+
+    private static String INPUT_KAFKA_TOPIC = null;
+    private static Integer currentHour = -1;
     private static ReentrantLock lock = new ReentrantLock();
-    private static ReentrantLock lockCalendar = new ReentrantLock();
-    private static ReentrantLock lockArray = new ReentrantLock();
-
-    private static int counterToDelete = 0;
-    private static int minimumHourSize = 4;
-    private static boolean isIn = false;
-
-    private static ArrayList<Long> minimumHour = new ArrayList<>();
-
+    private static int countToDelete = 0;
 
 
     public void calculateQuery2() throws Exception {
 
+        INPUT_KAFKA_TOPIC = "query2";
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "localhost:9092");
         properties.setProperty("zookeeper.connect", "localhost:2181");
@@ -45,30 +44,37 @@ public class FlinkFile {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
-                env.readTextFile("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat");
-
-        env.setParallelism(1);
+                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat");
 
         SingleOutputStreamOperator<Tuple3<Date, Integer, Long>> streamTuples =
                 stream.flatMap(new Tokenizer());
 
 
+        //SingleOutputStreamOperator<Tuple3<Date, Long, Long>> resultStream =
         streamTuples
-            .assignTimestampsAndWatermarks(new AssignerWithPunctuatedWatermarks<Tuple3<Date, Integer, Long>>() {
-                @Override
-                public long extractTimestamp(Tuple3<Date, Integer, Long> element, long l) {
-                    return element.f0.getTime();
-                }
+                    .assignTimestampsAndWatermarks(new AssignerWithPunctuatedWatermarks<Tuple3<Date, Integer, Long>>() {
+                        @Override
+                        public long extractTimestamp(Tuple3<Date, Integer, Long> element, long l) {
+                            return element.f0.getTime();
+                        }
 
-                @Override
-                public Watermark checkAndGetNextWatermark(Tuple3<Date, Integer, Long> element, long l) {
-                    return new Watermark(element.f0.getTime() - 1);
-                }
-            })
-            .keyBy(2)
-            .timeWindow(Time.hours(1))
-            .aggregate(new AverageAggregate());
+                        @Override
+                        public Watermark checkAndGetNextWatermark(Tuple3<Date, Integer, Long> element, long l) {
+                            return new Watermark(element.f0.getTime() - 1);
+                        }
+                })
+                .keyBy(2)
+                .timeWindow(Time.hours(1))
+                .aggregate(new AverageAggregate());
+        //.setParallelism(1);
 
+/*        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor_query2", st -> {
+            Message m = new Message();
+            m.setTmp(String.valueOf(st.f0.getTime()));
+            m.setPost_commented(st.f1);
+            m.setCount(st.f2);
+            return new Gson().toJson(m).getBytes();
+        }));*/
 
         env.execute("Query 2 Real-Time Classification");
 
@@ -95,22 +101,14 @@ public class FlinkFile {
 
         @Override
         public Tuple3<Date, Long, Long> getResult(Tuple3<Date, Long, Long> accumulator) {
-
-            //Long currentTmp = accumulator.f0.getTime();
-
-            Message messageMonitor = new Message();
-            messageMonitor.setTmp(String.valueOf(accumulator.f0.getTime()));
-            messageMonitor.setPost_commented(accumulator.f1);
-            messageMonitor.setCount(accumulator.f2);
-
-            //lockArray.lock();
-            minimumHour.add(accumulator.f0.getTime());
-            //lockArray.unlock();
-
-            //while(!checkIfValueIsMinimum(currentTmp)){}
-            //isIn = true;
-            MonitorBatch2.getInstance().makeCheck(messageMonitor);
-            //isIn = false;
+            //System.out.println("accumulator: " + accumulator.f0.toString());
+            Message m = new Message();
+            m.setTmp(String.valueOf(accumulator.f0.getTime()));
+            m.setPost_commented(accumulator.f1);
+            m.setCount(accumulator.f2);
+            lock.lock();
+            MonitorBatch2.getInstance().makeCheck(m);
+            lock.unlock();
             return accumulator;
         }
 
@@ -125,6 +123,7 @@ public class FlinkFile {
         }
     }
 
+
     public static final class Tokenizer implements FlatMapFunction<String, Tuple3<Date, Integer, Long>> {
         private static final long serialVersionUID = 1L;
 
@@ -133,8 +132,7 @@ public class FlinkFile {
             String[] bufferReading = value.split("\\|");
 
             if (bufferReading[5].equals("") || bufferReading[5].equals(" ")) {
-                SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
-                Date timestamp = sdf.parse(bufferReading[0]);
+                Date timestamp = new SimpleDateFormat(dateFormat).parse(bufferReading[0]);
                 Calendar c = GregorianCalendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
                 c.setTime(timestamp);
 
@@ -146,44 +144,6 @@ public class FlinkFile {
 
         }
     }
-
-/*
-    private static boolean checkIfValueIsMinimum(Long currentDate){
-
-        lockArray.lock();
-        if(isIn){
-            lockArray.unlock();
-            return false;
-        }
-        if(minimumHour.size() > minimumHourSize)
-            minimumHourSize = minimumHour.size();
-        if(minimumHour.size() < minimumHourSize) {
-            counterToDelete ++;
-            if(counterToDelete % 1000000 == 0) {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                //System.out.println("esco qui " + currentDate + ": " + minimumHour.toString());
-                //System.out.println("setto la finestra a " + minimumHour.size());
-                minimumHourSize = minimumHour.size();
-                counterToDelete = 0;
-            }
-            lockArray.unlock();
-            return false;
-        }
-        for(Long d : minimumHour){
-            if (currentDate > d) {
-                lockArray.unlock();
-                return false;
-            }
-        }
-        minimumHour.remove(currentDate);
-        lockArray.unlock();
-        return true;
-    }
-*/
 
 
 }

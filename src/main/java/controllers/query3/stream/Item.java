@@ -1,4 +1,4 @@
-package controllers.query3;
+package controllers.query3.stream;
 
 import java.util.ArrayList;
 

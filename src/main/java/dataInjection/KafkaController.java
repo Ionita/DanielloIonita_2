@@ -95,14 +95,14 @@ public class KafkaController implements Serializer {
 
         if (type == 1){
             //Thread thread1 = new Thread(() -> {
-                readData("/home/simone/IdeaProjects/DanielloIonita_2/data/friendships.dat", 0);
+                readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
             //});
             //thread1.start();
             //thread1.join();
         }
         else if(type == 2){
             //Thread thread3 = new Thread(() -> {
-                readData("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat", 2);
+                readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
             //});
             //thread3.start();
             //thread3.join();
@@ -110,7 +110,7 @@ public class KafkaController implements Serializer {
         else {
             //Thread thread2 = new Thread(() -> {
                 try {
-                    sendQuery3Data("/home/simone/IdeaProjects/DanielloIonita_2/query3_file.txt");
+                    sendQuery3Data("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/query3_file.txt");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -328,7 +328,7 @@ public class KafkaController implements Serializer {
                 }
 
             }
-
+            //System.out.println("tipo: " + m.getType() + "    message: " + m.getTmp() + "  " + m.getUser_id1());
             this.sendMessage(m, "query3");
 
         }

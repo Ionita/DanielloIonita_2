@@ -1,4 +1,4 @@
-package controllers.query3;
+package controllers.query3.stream;
 
 import com.google.gson.Gson;
 import entities.Message;
@@ -7,11 +7,14 @@ import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.tuple.*;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
 import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.triggers.Trigger;
 import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
@@ -38,6 +41,7 @@ public class FlinkControllerQuery3 implements Serializable {
         String randomId = UUID.randomUUID().toString();
         properties.setProperty("group.id", randomId);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         DataStreamSource<String> stream = env.addSource(new FlinkKafkaConsumer011(INPUT_KAFKA_TOPIC, new SimpleStringSchema(), properties));
 
 
@@ -46,10 +50,18 @@ public class FlinkControllerQuery3 implements Serializable {
 
         SingleOutputStreamOperator<Tuple4<Date, Long, Long, String>> resultStream =
                 streamTuples
+                        .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<Tuple4<Date, Integer, Long, String>>(Time.hours(23)) {
+                    @Override
+                    public long extractTimestamp(Tuple4<Date, Integer, Long, String> element) {
+                        return element.f0.getTime();
+                    }
+                })
                         .keyBy(2)
-                        .window(GlobalWindows.create())
-                        .trigger(new MyTrigger())
-                        .aggregate(new AverageAggregate());
+                        //.window(GlobalWindows.create())
+                        //.trigger(new MyTrigger())
+                        .timeWindow(Time.minutes(60))
+                        .aggregate(new AverageAggregate())
+                        .setParallelism(1);
 
         resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor_query3",  st -> {
             Message m = new Message(3);
@@ -64,6 +76,8 @@ public class FlinkControllerQuery3 implements Serializable {
 
     }
 
+
+    //TODO: change how is taken id value, is wrong
     private static class AverageAggregate implements AggregateFunction<Tuple4<Date, Integer, Long, String>, Tuple4<Date, Long, Long, String>, Tuple4<Date, Long, Long, String>> {
 
         @Override
@@ -115,7 +129,7 @@ public class FlinkControllerQuery3 implements Serializable {
         }
     }
 
-    private class MyTrigger extends Trigger<Tuple4<Date, Integer, Long, String>, GlobalWindow> {
+    /*private class MyTrigger extends Trigger<Tuple4<Date, Integer, Long, String>, GlobalWindow> {
         @Override
         public TriggerResult onElement(Tuple4<Date, Integer, Long, String> tuple, long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
 
@@ -146,5 +160,5 @@ public class FlinkControllerQuery3 implements Serializable {
         public void clear(GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
 
         }
-    }
+    }*/
 }

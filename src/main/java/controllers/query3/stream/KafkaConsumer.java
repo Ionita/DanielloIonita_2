@@ -1,6 +1,7 @@
-package controllers.query1;
+package controllers.query3.stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import controllers.query2.stream_kafka.Monitor2;
 import entities.Message;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -16,9 +17,9 @@ import java.util.UUID;
 
 public class KafkaConsumer {
 
-    Monitor m;
+    Monitor3 m;
 
-    public void setAttributes(Monitor m) {
+    public void setAttributes(Monitor3 m) {
         this.m = m;
     }
 
@@ -92,7 +93,15 @@ public class KafkaConsumer {
         }
     }
 
-
+    /**
+     * Message codes:
+     * 10:     get the list of semaphores in the crossroad by the controller
+     * 301:    the controller has started the voting phase of the 2pc
+     * 302:    the controller has started the commit phase of the 2pc
+     * -302:   the controller has started the rollback phase of the 2pc
+     *
+     * @param message
+     */
     private void workWithMessage(Message message) {
         //m.rotation(message);
         //System.out.println(message.getTmp());
