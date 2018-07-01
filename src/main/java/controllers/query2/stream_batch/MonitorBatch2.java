@@ -14,7 +14,7 @@ import java.util.Calendar;
 import java.util.Comparator;
 import java.util.TimeZone;
 
-public class MonitorBatch2 {
+public class MonitorBatch2{
 
     private static MonitorBatch2 instance = new MonitorBatch2();
 
@@ -48,7 +48,7 @@ public class MonitorBatch2 {
      *
      */
 
-    void makeCheck(Message m){
+    synchronized void makeCheck(Message m){
         //field filling in message
         fillFields(m);
         //check if it is the first one
@@ -258,8 +258,30 @@ public class MonitorBatch2 {
         //salvo tante colonne quanto è lo spostamento verso destra. faccio la stessa operazione di quando
         // setto le nuove boundaries. è brutto ma non so come fare altrimenti. Per ora questa operazione
         // server solamente a stampare il timestamp di riferimento
-        oldHour--;
         for(int j = 0; j < difference; j++) {
+
+            //ordino i dati (reverse per avere ordine decrescente)
+            query2_items.sort(Comparator.comparingInt(Query2_Item::getFirstWindowPosition).reversed());
+            Integer[] temp = new Integer[20];
+            int k = 0;
+            int maxValue = 10;
+            //prendo i primi dieci valori oppure tutti gli elementi dell'array se in numero inferiore
+            if (query2_items.size() < 10)
+                maxValue = query2_items.size();
+            //salvo i dieci valori in un array temporaneo insieme al loro id
+            for (int i = 0; i  < maxValue; i++){
+                temp[k] = query2_items.get(i).getPost_id().intValue();
+                temp[k+1] = query2_items.get(i).getFirstWindowPosition();
+                k += 2;
+            }
+            //rimuovo la prima colonna a tutti e aggiungo uno zero per mantenere costante la grandezza dell'array
+            for (Query2_Item q : query2_items) {
+                q.setDailyValue(q.getDailyValue() + q.getFirstWindowPosition());
+                q.setWeekValue(q.getWeekValue() + q.getFirstWindowPosition());
+                q.getSlidingWindow().remove(0);
+                q.getSlidingWindow().add(0);
+            }
+            saveColumnToFile(temp, oldHour, oldDay, oldWeek, oldYear);
             oldHour ++;
             if(oldHour == 24){
                 oldHour -= 24;
@@ -286,28 +308,6 @@ public class MonitorBatch2 {
                     }
                 }
             }
-            //ordino i dati (reverse per avere ordine decrescente)
-            query2_items.sort(Comparator.comparingInt(Query2_Item::getFirstWindowPosition).reversed());
-            Integer[] temp = new Integer[20];
-            int k = 0;
-            int maxValue = 10;
-            //prendo i primi dieci valori oppure tutti gli elementi dell'array se in numero inferiore
-            if (query2_items.size() < 10)
-                maxValue = query2_items.size();
-            //salvo i dieci valori in un array temporaneo insieme al loro id
-            for (int i = 0; i  < maxValue; i++){
-                temp[k] = query2_items.get(i).getPost_id().intValue();
-                temp[k+1] = query2_items.get(i).getFirstWindowPosition();
-                k += 2;
-            }
-            //rimuovo la prima colonna a tutti e aggiungo uno zero per mantenere costante la grandezza dell'array
-            for (Query2_Item q : query2_items) {
-                q.setDailyValue(q.getDailyValue() + q.getFirstWindowPosition());
-                q.setWeekValue(q.getWeekValue() + q.getFirstWindowPosition());
-                q.getSlidingWindow().remove(0);
-                q.getSlidingWindow().add(0);
-            }
-            saveColumnToFile(temp, oldHour, oldDay, oldWeek, oldYear);
         }
     }
 

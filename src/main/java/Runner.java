@@ -1,5 +1,6 @@
 import controllers.query1.FlinkController;
 import controllers.query2.stream_batch.FlinkFile;
+import controllers.query2.stream_kafka.FlinkControllerQuery2;
 import controllers.query2.stream_kafka.Monitor2;
 import controllers.query3.FlinkControllerQuery3;
 import dataInjection.KafkaController;
@@ -56,8 +57,8 @@ public class Runner {
     private static void query2() throws InterruptedException {
 
         KafkaController kc = new KafkaController(2);
-        //FlinkControllerQuery2 query2 = new FlinkControllerQuery2();
-        FlinkFile query2 = new FlinkFile();
+        FlinkControllerQuery2 query2 = new FlinkControllerQuery2();
+        //FlinkFile query2 = new FlinkFile();
 
         Thread thread_kafka_injection = new Thread(() -> {
             try {
@@ -76,9 +77,9 @@ public class Runner {
         Thread thread_monitor_query2 = new Thread(Monitor2::new);
 
 
-        //thread_monitor_query2.start();
+        thread_monitor_query2.start();
         thread_query2.start();
-        /*try {
+        try {
             Thread.sleep(20000);
             System.out.println("starting sending messages on kafka topic");
         } catch (InterruptedException e) {
@@ -86,9 +87,9 @@ public class Runner {
         }
         thread_kafka_injection.start();
 
-        thread_kafka_injection.join();*/
+        thread_kafka_injection.join();
         thread_query2.join();
-        //thread_monitor_query2.join();
+        thread_monitor_query2.join();
     }
 
     private static void query3() throws InterruptedException {
