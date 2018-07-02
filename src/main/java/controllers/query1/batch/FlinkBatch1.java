@@ -38,11 +38,6 @@ public class FlinkBatch1 implements Serializable {
 
     public void calculateAvg() throws Exception {
 
-        INPUT_KAFKA_TOPIC = "query1";
-        Properties properties = new Properties();
-        properties.setProperty("bootstrap.servers", "localhost:9092");
-        properties.setProperty("zookeeper.connect", "localhost:2181");
-        properties.setProperty("group.id", INPUT_KAFKA_TOPIC);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         DataStreamSource<String> stream =
@@ -117,18 +112,15 @@ public class FlinkBatch1 implements Serializable {
         public void flatMap(String value, Collector<Tuple5<Integer, Integer, Date, Long, Long>> out) throws Exception {
             String[] bufferReading = value.split("\\|");
 
-            if (bufferReading[5].equals("") || bufferReading[5].equals(" ")) {
-                Long user1 = Long.valueOf(bufferReading[1]);
-                Long user2 = Long.valueOf(bufferReading[2]);
-                Date timestamp = new SimpleDateFormat(dateFormat).parse(bufferReading[0]);
-                Calendar c = GregorianCalendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
-                c.setTime(timestamp);
-                Integer hour = (c.get(Calendar.HOUR_OF_DAY));
-                Integer year = (c.get(Calendar.YEAR));
-                Long postCommented = Long.valueOf(bufferReading[6]);
+            Long user1 = Long.valueOf(bufferReading[1]);
+            Long user2 = Long.valueOf(bufferReading[2]);
+            Date timestamp = new SimpleDateFormat(dateFormat).parse(bufferReading[0]);
+            Calendar c = GregorianCalendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
+            c.setTime(timestamp);
+            Integer hour = (c.get(Calendar.HOUR_OF_DAY));
+            Integer year = (c.get(Calendar.YEAR));
 
-                out.collect(new Tuple5<>(hour, year, timestamp, user1, user2));
-            }
+            out.collect(new Tuple5<>(hour, year, timestamp, user1, user2));
 
         }
     }

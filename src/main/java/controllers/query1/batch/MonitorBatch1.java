@@ -114,6 +114,7 @@ class MonitorBatch1 {
             chour = m.getHour();
         }
         if (type > 1) {
+            InfluxDBsaves_1.getInstance().savePointOnDB("hours", firstTmpOfTheDay, dayHours);
             query1Results(dateFormat.format(firstTmpOfTheDay), dayHours);
             for(int i = 0; i<24; i++)
                 dayHours[i] = 0;
@@ -185,8 +186,6 @@ class MonitorBatch1 {
 
             Calendar c = Calendar.getInstance();
             c.setTime(firstTmpOfTheWeek);
-            System.out.println("week: " + c.get(Calendar.WEEK_OF_YEAR) + ", timestamp: " + ts + ", value: " + week);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
