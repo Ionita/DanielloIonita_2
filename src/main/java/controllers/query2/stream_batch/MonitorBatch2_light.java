@@ -13,9 +13,9 @@ import java.util.Calendar;
 import java.util.Comparator;
 import java.util.TimeZone;
 
-public class MonitorBatch2{
+public class MonitorBatch2_light {
 
-    private static MonitorBatch2 instance = new MonitorBatch2();
+    private static MonitorBatch2_light instance = new MonitorBatch2_light();
 
     private ArrayList<Query2_Item> query2_items;
     private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
@@ -27,14 +27,6 @@ public class MonitorBatch2{
     private Integer leftBoundaryDay;
     private Integer leftBoundaryWeek;
     private Integer leftBoundaryYear;
-
-
-    private Integer rightBoundaryHour;
-    private Integer rightBoundaryDay;
-    private Integer rightBoundaryWeek;
-    private Integer rightBoundaryYear;
-
-    private final Integer slidingWindowSize = 2;
 
     /**
      * arriva un dato.
@@ -59,11 +51,11 @@ public class MonitorBatch2{
 
     }
 
-    public static MonitorBatch2 getInstance(){
+    public static MonitorBatch2_light getInstance(){
         return instance;
     }
 
-    private MonitorBatch2(){
+    private MonitorBatch2_light(){
         Thread thread1 = new Thread(() -> {
             long current_ok_packets = OK_PACKETS;
             int times = 0;
@@ -87,7 +79,6 @@ public class MonitorBatch2{
             }
             if(OK_PACKETS != 0) {
                 System.out.println("Error of " + ((Double.valueOf(DISCARDED_PACKETS) * 100) / Double.valueOf(OK_PACKETS)) + "%");
-                slideToRight(slidingWindowSize, leftBoundaryHour, leftBoundaryDay, leftBoundaryWeek, leftBoundaryYear);
                 System.exit(0);
             }
         });
@@ -106,20 +97,6 @@ public class MonitorBatch2{
                 while(leftBoundaryWeek > 52){
                     leftBoundaryWeek -= 52;
                     leftBoundaryYear ++;
-                }
-            }
-        }
-
-        rightBoundaryHour += positions;
-        while(rightBoundaryHour > 23){
-            rightBoundaryHour -= 24;
-            rightBoundaryDay = rightBoundaryDay + 1;
-            while(rightBoundaryDay > 7){
-                rightBoundaryDay -= 7;
-                rightBoundaryWeek ++;
-                while(rightBoundaryWeek > 52){
-                    rightBoundaryWeek -= 52;
-                    rightBoundaryYear ++;
                 }
             }
         }
@@ -142,10 +119,6 @@ public class MonitorBatch2{
     private void checkFirstOne (Message m) {
         if (leftBoundaryHour == -1) {
             initialization();
-            if (slidingWindowSize > 24){
-                System.out.println("errore > 24");
-                return;
-            }
             leftBoundaryHour = m.getHour();
             leftBoundaryDay = m.getDay();
             leftBoundaryWeek = m.getWeek();
@@ -165,22 +138,6 @@ public class MonitorBatch2{
             System.out.println(dateFormat.format(c.getTimeInMillis()));
             /*CANCELLA*/
 
-            rightBoundaryHour = leftBoundaryHour + slidingWindowSize;
-            rightBoundaryDay = leftBoundaryDay;
-            rightBoundaryWeek = leftBoundaryWeek;
-            rightBoundaryYear = leftBoundaryYear;
-            if(rightBoundaryHour > 23){
-                rightBoundaryHour -= 24;
-                rightBoundaryDay = leftBoundaryDay + 1;
-                if(rightBoundaryDay > 7){
-                    rightBoundaryDay -= 7;
-                    rightBoundaryWeek = leftBoundaryWeek + 1;
-                    if(rightBoundaryWeek > 52){
-                        rightBoundaryWeek -= 52;
-                        rightBoundaryYear = leftBoundaryYear + 1;
-                    }
-                }
-            }
         }
     }
 
@@ -198,21 +155,8 @@ public class MonitorBatch2{
 
         long leftMillis = left.getTimeInMillis();
 
-        Calendar right = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
-        right.set(Calendar.HOUR_OF_DAY, rightBoundaryHour);
-        right.set(Calendar.DAY_OF_WEEK, rightBoundaryDay);
-        right.set(Calendar.WEEK_OF_YEAR, rightBoundaryWeek);
-        right.set(Calendar.YEAR, rightBoundaryYear);
-
-        long rightMillis = right.getTimeInMillis();
-
         //in the bounds
         if(messageHour == leftBoundaryHour && messageDay == leftBoundaryDay && messageWeek == leftBoundaryWeek && messageYear == leftBoundaryYear){
-            OK_PACKETS++;
-            return true; //si aggiunge il pacchetto alla finestra senza fare nessuna operazione preliminare
-        }
-        //in the bounds
-        else if(Long.parseLong(m.getTmp()) <= rightMillis && Long.parseLong(m.getTmp()) >= leftMillis){
             OK_PACKETS++;
             return true; //si aggiunge il pacchetto alla finestra senza fare nessuna operazione preliminare
         }
@@ -229,19 +173,19 @@ public class MonitorBatch2{
 
             int difference;
 
-            if(messageDay >= rightBoundaryDay) {
-                difference = messageHour + (24 * (messageDay - rightBoundaryDay))-rightBoundaryHour;
+            if(messageDay >= leftBoundaryDay) {
+                difference = messageHour + (24 * (messageDay - leftBoundaryDay))-leftBoundaryHour;
                 setNewBoundaries(difference);
             }
-            else if(messageWeek >= rightBoundaryWeek) {
+            else if(messageWeek >= leftBoundaryWeek) {
                 //week change
-                difference = messageHour + (24* (messageDay + 7 - rightBoundaryDay))-rightBoundaryHour;
+                difference = messageHour + (24* (messageDay + 7 - leftBoundaryDay))-leftBoundaryHour;
                 setNewBoundaries(difference);
             }
             else{
                 //year change
 
-                difference = messageHour + (24* (messageDay + 7 - rightBoundaryDay))-rightBoundaryHour;
+                difference = messageHour + (24* (messageDay + 7 - leftBoundaryDay))-leftBoundaryHour;
                 setNewBoundaries(difference);
                 System.out.println("cambio anno \n\n\n\n");
             }
@@ -317,7 +261,7 @@ public class MonitorBatch2{
 
         //the item doesn't already exists in the ArrayList
         if (position == -1){
-            Query2_Item item = new Query2_Item(slidingWindowSize);
+            Query2_Item item = new Query2_Item(1);
             item.setPost_id(postID);
             item.setTmp(m.getTmp());
             query2_items.add(item);

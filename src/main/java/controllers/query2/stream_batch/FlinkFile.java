@@ -34,17 +34,11 @@ public class FlinkFile {
 
     public void calculateQuery2() throws Exception {
 
-        INPUT_KAFKA_TOPIC = "query2";
-        Properties properties = new Properties();
-        properties.setProperty("bootstrap.servers", "localhost:9092");
-        properties.setProperty("zookeeper.connect", "localhost:2181");
-        String randomId = UUID.randomUUID().toString();
-        properties.setProperty("group.id", randomId);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
-                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat");
+                env.readTextFile("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat");
 
         SingleOutputStreamOperator<Tuple3<Date, Integer, Long>> streamTuples =
                 stream.flatMap(new Tokenizer());
@@ -52,30 +46,21 @@ public class FlinkFile {
 
         //SingleOutputStreamOperator<Tuple3<Date, Long, Long>> resultStream =
         streamTuples
-                    .assignTimestampsAndWatermarks(new AssignerWithPunctuatedWatermarks<Tuple3<Date, Integer, Long>>() {
-                        @Override
-                        public long extractTimestamp(Tuple3<Date, Integer, Long> element, long l) {
-                            return element.f0.getTime();
-                        }
+            .assignTimestampsAndWatermarks(new AssignerWithPunctuatedWatermarks<Tuple3<Date, Integer, Long>>() {
+                @Override
+                public long extractTimestamp(Tuple3<Date, Integer, Long> element, long l) {
+                    return element.f0.getTime();
+                }
 
-                        @Override
-                        public Watermark checkAndGetNextWatermark(Tuple3<Date, Integer, Long> element, long l) {
-                            return new Watermark(element.f0.getTime() - 1);
-                        }
-                })
-                .keyBy(2)
-                .timeWindow(Time.hours(1))
-                .aggregate(new AverageAggregate());
-        //.setParallelism(1);
-
-/*        resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor_query2", st -> {
-            Message m = new Message();
-            m.setTmp(String.valueOf(st.f0.getTime()));
-            m.setPost_commented(st.f1);
-            m.setCount(st.f2);
-            return new Gson().toJson(m).getBytes();
-        }));*/
-
+                @Override
+                public Watermark checkAndGetNextWatermark(Tuple3<Date, Integer, Long> element, long l) {
+                    return new Watermark(element.f0.getTime() - 1);
+                }
+            })
+            .keyBy(2)
+            .timeWindow(Time.hours(1))
+            .aggregate(new AverageAggregate())
+            .setParallelism(1);
         env.execute("Query 2 Real-Time Classification");
 
     }
@@ -106,9 +91,7 @@ public class FlinkFile {
             m.setTmp(String.valueOf(accumulator.f0.getTime()));
             m.setPost_commented(accumulator.f1);
             m.setCount(accumulator.f2);
-            lock.lock();
-            MonitorBatch2.getInstance().makeCheck(m);
-            lock.unlock();
+            MonitorBatch2_light.getInstance().makeCheck(m);
             return accumulator;
         }
 
