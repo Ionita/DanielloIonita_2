@@ -1,4 +1,4 @@
-package controllers.query1;
+package controllers.query1.stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entities.Message;

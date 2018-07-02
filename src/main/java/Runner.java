@@ -1,11 +1,10 @@
-import controllers.query1.FlinkController;
-import controllers.query2.stream_batch.FlinkFile;
+import controllers.query1.stream.FlinkController;
 import controllers.query2.stream_kafka.FlinkControllerQuery2;
 import controllers.query2.stream_kafka.Monitor2;
 import controllers.query3.stream.FlinkControllerQuery3;
 import controllers.query3.stream.Monitor3;
 import dataInjection.KafkaController;
-import controllers.query1.Monitor;
+import controllers.query1.stream.Monitor;
 
 
 public class Runner {

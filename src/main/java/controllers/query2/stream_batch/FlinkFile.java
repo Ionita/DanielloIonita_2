@@ -123,7 +123,6 @@ public class FlinkFile {
         }
     }
 
-
     public static final class Tokenizer implements FlatMapFunction<String, Tuple3<Date, Integer, Long>> {
         private static final long serialVersionUID = 1L;
 
