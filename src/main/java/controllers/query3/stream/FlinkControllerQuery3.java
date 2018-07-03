@@ -44,13 +44,15 @@ public class FlinkControllerQuery3 implements Serializable {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         DataStreamSource<String> stream = env.addSource(new FlinkKafkaConsumer011(INPUT_KAFKA_TOPIC, new SimpleStringSchema(), properties));
 
+        env.setParallelism(1);
+
 
         //System.out.println("got sources");
         DataStream<Tuple4<Date, Integer, Long, String>> streamTuples = stream.flatMap(new Message2Tuple());
 
         SingleOutputStreamOperator<Tuple4<Date, Long, Long, String>> resultStream =
                 streamTuples
-                        .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<Tuple4<Date, Integer, Long, String>>(Time.hours(23)) {
+                        .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<Tuple4<Date, Integer, Long, String>>(Time.minutes(60)) {
                     @Override
                     public long extractTimestamp(Tuple4<Date, Integer, Long, String> element) {
                         return element.f0.getTime();

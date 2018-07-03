@@ -30,22 +30,26 @@ import java.util.*;
 
 public class FlinkBatch1 implements Serializable {
 
-    private static String INPUT_KAFKA_TOPIC = null;
+    //private static String INPUT_KAFKA_TOPIC = null;
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
+/*
     private Integer currentHour = -1;
     private Date accumulatorDate = null;
+*/
 
     public void calculateAvg() throws Exception {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
         DataStreamSource<String> stream =
-                env.readTextFile("/home/simone/IdeaProjects/DanielloIonita_2/data/friendships.dat");
+                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat");
 
         env.setParallelism(1);
         //System.out.println("got sources");
-        DataStream<Tuple5<Integer,Integer, Date, Long, Long>> streamTuples = stream.flatMap(new Tokenizer());
+        DataStream<Tuple5<Integer,Integer, Date, Long, Long>> streamTuples =
+                stream.flatMap(new Tokenizer());
 
 
         streamTuples
@@ -124,8 +128,4 @@ public class FlinkBatch1 implements Serializable {
 
         }
     }
-
-
-
-
 }

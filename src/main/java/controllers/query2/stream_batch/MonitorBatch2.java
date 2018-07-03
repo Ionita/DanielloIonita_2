@@ -71,7 +71,7 @@ public class MonitorBatch2{
                 try {
                     Thread.sleep(10000);
                     System.out.println("OK_PACKETS: " + OK_PACKETS);
-                    System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
+                    System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS + "\n");
                     if (OK_PACKETS == current_ok_packets)
                         times ++;
                     else
@@ -162,7 +162,7 @@ public class MonitorBatch2{
             c.set(Calendar.HOUR_OF_DAY, leftBoundaryHour);
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
-            System.out.println(dateFormat.format(c.getTimeInMillis()));
+            //System.out.println(dateFormat.format(c.getTimeInMillis()));
             /*CANCELLA*/
 
             rightBoundaryHour = leftBoundaryHour + slidingWindowSize;

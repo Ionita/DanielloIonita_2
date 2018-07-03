@@ -145,10 +145,10 @@ public class Monitor3 {
             leftBoundaryWeek = m.getWeek();
             leftBoundaryYear = m.getYear();
             /*CANCELLA*/
-            System.out.println("setto left boundary a : \n " +
+            /*System.out.println("setto left boundary a : \n " +
                     "day : " + leftBoundaryDay + ", hour: " + leftBoundaryHour + ", week: " + leftBoundaryWeek + ", year: " + leftBoundaryYear + "\n" +
                     "tmp of the packet: " + m.getTmp() + ", id utente: " + m.getUser_id1());
-
+*/
             Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
             c.set(Calendar.WEEK_OF_YEAR, leftBoundaryWeek);
             c.set(Calendar.YEAR, leftBoundaryYear);
@@ -156,7 +156,7 @@ public class Monitor3 {
             c.set(Calendar.HOUR_OF_DAY, leftBoundaryHour);
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
-            System.out.println(dateFormat.format(c.getTimeInMillis()));
+            //System.out.println(dateFormat.format(c.getTimeInMillis()));
             /*CANCELLA*/
 
             rightBoundaryHour = leftBoundaryHour + slidingWindowSize;

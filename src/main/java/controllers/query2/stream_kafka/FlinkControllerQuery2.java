@@ -132,7 +132,7 @@ public class FlinkControllerQuery2 implements Serializable {
 
     private class MyTrigger extends Trigger<Tuple3<Date, Integer, Long>, GlobalWindow> {
         @Override
-        public TriggerResult onElement(Tuple3<Date, Integer, Long> tuple, long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+        public TriggerResult onElement(Tuple3<Date, Integer, Long> tuple, long l, GlobalWindow globalWindow, TriggerContext triggerContext) {
 
             if (currentHour == -1) {
                 lock.lock();
@@ -158,17 +158,17 @@ public class FlinkControllerQuery2 implements Serializable {
         }
 
         @Override
-        public TriggerResult onProcessingTime(long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+        public TriggerResult onProcessingTime(long l, GlobalWindow globalWindow, TriggerContext triggerContext) {
             return TriggerResult.CONTINUE;
         }
 
         @Override
-        public TriggerResult onEventTime(long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+        public TriggerResult onEventTime(long l, GlobalWindow globalWindow, TriggerContext triggerContext) {
             return TriggerResult.CONTINUE;
         }
 
         @Override
-        public void clear(GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+        public void clear(GlobalWindow globalWindow, TriggerContext triggerContext) {
 
         }
     }

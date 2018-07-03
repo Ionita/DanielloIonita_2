@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 public class Query3_Item {
     private Long tmp;
-    //private Long post_id;
     private Long user_id;
     private ArrayList<Integer> slidingWindow;
     private Integer dailyValue = 0;
@@ -24,14 +23,6 @@ public class Query3_Item {
     public void setTmp(String tmp) {
         this.tmp = Long.parseLong(tmp);
     }
-
-    /*public Long getPost_id() {
-        return post_id;
-    }
-
-    public void setPost_id(Long post_id) {
-        this.post_id = post_id;
-    }*/
 
     public ArrayList<Integer> getSlidingWindow() {
         return slidingWindow;

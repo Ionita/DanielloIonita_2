@@ -16,7 +16,7 @@ public class InfluxDBsaves_1 {
     private static InfluxDB influxDB;
     private static BatchPoints batchPoints;
 
-    private static final String dbname = "telegraf";
+    private static final String dbname = "prova";
 
     public static InfluxDBsaves_1 getInstance(){
         return instance;

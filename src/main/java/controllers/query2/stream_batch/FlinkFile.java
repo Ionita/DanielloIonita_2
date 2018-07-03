@@ -26,10 +26,10 @@ public class FlinkFile {
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
-    private static String INPUT_KAFKA_TOPIC = null;
+    /*private static String INPUT_KAFKA_TOPIC = null;
     private static Integer currentHour = -1;
     private static ReentrantLock lock = new ReentrantLock();
-    private static int countToDelete = 0;
+    private static int countToDelete = 0;*/
 
 
     public void calculateQuery2() throws Exception {
@@ -38,7 +38,7 @@ public class FlinkFile {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
-                env.readTextFile("/home/simone/IdeaProjects/DanielloIonita_2/data/comments.dat");
+                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat");
 
         SingleOutputStreamOperator<Tuple3<Date, Integer, Long>> streamTuples =
                 stream.flatMap(new Tokenizer());
@@ -126,6 +126,4 @@ public class FlinkFile {
 
         }
     }
-
-
 }

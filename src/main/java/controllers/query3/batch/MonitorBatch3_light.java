@@ -1,5 +1,6 @@
-package controllers.query2.stream_kafka;
+package controllers.query3.batch;
 
+import controllers.query3.stream.Query3_Item;
 import entities.Message;
 
 import java.io.BufferedWriter;
@@ -7,12 +8,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.TimeZone;
 
-public class Monitor2 {
+public class MonitorBatch3_light {
 
+    private static MonitorBatch3_light instance = new MonitorBatch3_light();
 
-    private ArrayList<Query2_Item> query2_items;
+    private ArrayList<Query3_Item> query3_items;
     private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     private Long OK_PACKETS = 0L;
     private Long DISCARDED_PACKETS = 0L;
@@ -22,14 +27,6 @@ public class Monitor2 {
     private Integer leftBoundaryDay;
     private Integer leftBoundaryWeek;
     private Integer leftBoundaryYear;
-
-
-    private Integer rightBoundaryHour;
-    private Integer rightBoundaryDay;
-    private Integer rightBoundaryWeek;
-    private Integer rightBoundaryYear;
-
-    private final Integer slidingWindowSize = 24;
 
     /**
      * arriva un dato.
@@ -42,7 +39,7 @@ public class Monitor2 {
      *
      */
 
-    void makeCheck(Message m){
+    synchronized void makeCheck(Message m){
         //field filling in message
         fillFields(m);
         //check if it is the first one
@@ -54,7 +51,11 @@ public class Monitor2 {
 
     }
 
-    public Monitor2(){
+    public static MonitorBatch3_light getInstance(){
+        return instance;
+    }
+
+    private MonitorBatch3_light(){
         Thread thread1 = new Thread(() -> {
             long current_ok_packets = OK_PACKETS;
             int times = 0;
@@ -78,14 +79,10 @@ public class Monitor2 {
             }
             if(OK_PACKETS != 0) {
                 System.out.println("Error of " + ((Double.valueOf(DISCARDED_PACKETS) * 100) / Double.valueOf(OK_PACKETS)) + "%");
-                slideToRight(slidingWindowSize, leftBoundaryHour, leftBoundaryDay, leftBoundaryWeek, leftBoundaryYear);
                 System.exit(0);
             }
         });
         thread1.start();
-        KafkaConsumer kc = new KafkaConsumer();
-        kc.setAttributes(this);
-        kc.runConsumer("monitor_query2");
     }
 
     private void setNewBoundaries(int positions){
@@ -103,32 +100,10 @@ public class Monitor2 {
                 }
             }
         }
-
-        rightBoundaryHour += positions;
-        while(rightBoundaryHour > 23){
-            rightBoundaryHour -= 24;
-            rightBoundaryDay = rightBoundaryDay + 1;
-            while(rightBoundaryDay > 7){
-                rightBoundaryDay -= 7;
-                rightBoundaryWeek ++;
-                Calendar cal = Calendar.getInstance();
-                cal.set(Calendar.YEAR, rightBoundaryYear);
-                cal.set(Calendar.MONTH, Calendar.DECEMBER);
-                cal.set(Calendar.DAY_OF_MONTH, 31);
-
-                int ordinalDay = cal.get(Calendar.DAY_OF_YEAR);
-                int weekDay = cal.get(Calendar.DAY_OF_WEEK) - 1; // Sunday = 0
-                int numberOfWeeks = (ordinalDay - weekDay + 10) / 7;
-                while(rightBoundaryWeek > numberOfWeeks){
-                    rightBoundaryWeek -= numberOfWeeks;
-                    rightBoundaryYear ++;
-                }
-            }
-        }
     }
 
     private void initialization(){
-        query2_items = new ArrayList<>();
+        query3_items = new ArrayList<>();
     }
 
     private void fillFields(Message m){
@@ -144,16 +119,12 @@ public class Monitor2 {
     private void checkFirstOne (Message m) {
         if (leftBoundaryHour == -1) {
             initialization();
-            if (slidingWindowSize > 24){
-                System.out.println("errore > 24");
-                return;
-            }
             leftBoundaryHour = m.getHour();
             leftBoundaryDay = m.getDay();
             leftBoundaryWeek = m.getWeek();
             leftBoundaryYear = m.getYear();
             /*CANCELLA*/
-            /*System.out.println("setto left boundary a : \n " +
+           /* System.out.println("setto left boundary a : \n " +
                     "day : " + leftBoundaryDay + ", hour: " + leftBoundaryHour + ", week: " + leftBoundaryWeek + ", year: " + leftBoundaryYear + "\n" +
                     "tmp of the packet: " + m.getTmp() + ", id packet: " + m.getPost_commented());
 */
@@ -164,25 +135,9 @@ public class Monitor2 {
             c.set(Calendar.HOUR_OF_DAY, leftBoundaryHour);
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
-            /*System.out.println(dateFormat.format(c.getTimeInMillis()));
-            *//*CANCELLA*/
+            System.out.println(dateFormat.format(c.getTimeInMillis()));
+            /*CANCELLA*/
 
-            rightBoundaryHour = leftBoundaryHour + slidingWindowSize;
-            rightBoundaryDay = leftBoundaryDay;
-            rightBoundaryWeek = leftBoundaryWeek;
-            rightBoundaryYear = leftBoundaryYear;
-            if(rightBoundaryHour > 23){
-                rightBoundaryHour -= 24;
-                rightBoundaryDay = leftBoundaryDay + 1;
-                if(rightBoundaryDay > 7){
-                    rightBoundaryDay -= 7;
-                    rightBoundaryWeek = leftBoundaryWeek + 1;
-                    if(rightBoundaryWeek > 52){
-                        rightBoundaryWeek -= 52;
-                        rightBoundaryYear = leftBoundaryYear + 1;
-                    }
-                }
-            }
         }
     }
 
@@ -200,21 +155,8 @@ public class Monitor2 {
 
         long leftMillis = left.getTimeInMillis();
 
-        Calendar right = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
-        right.set(Calendar.HOUR_OF_DAY, rightBoundaryHour);
-        right.set(Calendar.DAY_OF_WEEK, rightBoundaryDay);
-        right.set(Calendar.WEEK_OF_YEAR, rightBoundaryWeek);
-        right.set(Calendar.YEAR, rightBoundaryYear);
-
-        long rightMillis = right.getTimeInMillis();
-
         //in the bounds
         if(messageHour == leftBoundaryHour && messageDay == leftBoundaryDay && messageWeek == leftBoundaryWeek && messageYear == leftBoundaryYear){
-            OK_PACKETS++;
-            return true; //si aggiunge il pacchetto alla finestra senza fare nessuna operazione preliminare
-        }
-        //in the bounds
-        else if(Long.parseLong(m.getTmp()) <= rightMillis && Long.parseLong(m.getTmp()) >= leftMillis){
             OK_PACKETS++;
             return true; //si aggiunge il pacchetto alla finestra senza fare nessuna operazione preliminare
         }
@@ -231,25 +173,25 @@ public class Monitor2 {
 
             int difference;
 
-            if(messageDay >= rightBoundaryDay) {
-                difference = messageHour + (24 * (messageDay - rightBoundaryDay))-rightBoundaryHour;
+            if(messageDay >= leftBoundaryDay) {
+                difference = messageHour + (24 * (messageDay - leftBoundaryDay))-leftBoundaryHour;
                 setNewBoundaries(difference);
             }
-            else if(messageWeek >= rightBoundaryWeek) {
+            else if(messageWeek >= leftBoundaryWeek) {
                 //week change
-                difference = messageHour + (24* (messageDay + 7 - rightBoundaryDay))-rightBoundaryHour;
+                difference = messageHour + (24* (messageDay + 7 - leftBoundaryDay))-leftBoundaryHour;
                 setNewBoundaries(difference);
             }
             else{
                 //year change
 
-                difference = messageHour + (24* (messageDay + 7 - rightBoundaryDay))-rightBoundaryHour;
+                difference = messageHour + (24* (messageDay + 7 - leftBoundaryDay))-leftBoundaryHour;
                 setNewBoundaries(difference);
-                //System.out.println("cambio anno \n\n\n\n");
+                System.out.println("cambio anno \n\n\n\n");
             }
             slideToRight(difference, oldHour, oldDay, oldWeek, oldYear); // ruoto verso destra la finestra e
-                                                                         // salvo i dati nelle prime colonne
-                                                                         // guarda bene soprattutto questa funzione
+            // salvo i dati nelle prime colonne
+            // guarda bene soprattutto questa funzione
             return true;
         }
 
@@ -260,36 +202,37 @@ public class Monitor2 {
         // setto le nuove boundaries. è brutto ma non so come fare altrimenti. Per ora questa operazione
         // server solamente a stampare il timestamp di riferimento
         for(int j = 0; j < difference; j++) {
+
             //ordino i dati (reverse per avere ordine decrescente)
-            query2_items.sort(Comparator.comparingInt(Query2_Item::getFirstWindowPosition).reversed());
+            query3_items.sort(Comparator.comparingInt(Query3_Item::getFirstWindowPosition).reversed());
             Integer[] temp = new Integer[20];
             int k = 0;
             int maxValue = 10;
             //prendo i primi dieci valori oppure tutti gli elementi dell'array se in numero inferiore
-            if (query2_items.size() < 10)
-                maxValue = query2_items.size();
+            if (query3_items.size() < 10)
+                maxValue = query3_items.size();
             //salvo i dieci valori in un array temporaneo insieme al loro id
             for (int i = 0; i  < maxValue; i++){
-                temp[k] = query2_items.get(i).getPost_id().intValue();
-                temp[k+1] = query2_items.get(i).getFirstWindowPosition();
+                temp[k] = query3_items.get(i).getUser_id().intValue();
+                temp[k+1] = query3_items.get(i).getFirstWindowPosition();
                 k += 2;
             }
             //rimuovo la prima colonna a tutti e aggiungo uno zero per mantenere costante la grandezza dell'array
-            for (Query2_Item q : query2_items) {
+            for (Query3_Item q : query3_items) {
                 q.setDailyValue(q.getDailyValue() + q.getFirstWindowPosition());
                 q.setWeekValue(q.getWeekValue() + q.getFirstWindowPosition());
                 q.getSlidingWindow().remove(0);
                 q.getSlidingWindow().add(0);
             }
-            //saveColumnToFile(temp, oldHour, oldDay, oldWeek, oldYear);
+            saveColumnToFile(temp, oldHour, oldDay, oldWeek, oldYear);
             oldHour ++;
             if(oldHour == 24){
                 oldHour -= 24;
-                //saveDailyValues(oldDay, oldWeek, oldYear);
+                saveDailyValues(oldDay, oldWeek, oldYear);
                 oldDay ++;
                 if(oldDay > 7){
                     oldDay -= 7;
-                    //saveWeeklyValues(oldWeek, oldYear);
+                    saveWeeklyValues(oldWeek, oldYear);
                     oldWeek ++;
 
 
@@ -313,15 +256,15 @@ public class Monitor2 {
 
     private void insertPostValue (Message m) {
         //getting post id
-        Long postID = m.getPost_commented();
-        int position = checkIfAlreadyIn(postID);
+        Long userID = m.getUser_id1();
+        int position = checkIfAlreadyIn(userID);
 
         //the item doesn't already exists in the ArrayList
         if (position == -1){
-            Query2_Item item = new Query2_Item(slidingWindowSize);
-            item.setPost_id(postID);
+            Query3_Item item = new Query3_Item(1);
+            item.setUser_id(userID);
             item.setTmp(m.getTmp());
-            query2_items.add(item);
+            query3_items.add(item);
             int currenthour = m.getHour();
             int currentDay = m.getDay();
 
@@ -334,7 +277,7 @@ public class Monitor2 {
                 }
             }
             else if (currentDay >= leftBoundaryDay + 1) {
-                int positionInWindow = currenthour + 24 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
+                int positionInWindow = currenthour + 24 - leftBoundaryHour;
                 if (positionInWindow >= 0) {
                     int currentValue = item.getSlidingWindow().get(positionInWindow);
                     item.getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
@@ -352,15 +295,15 @@ public class Monitor2 {
             if (currentDay == leftBoundaryDay){
                 int positionInWindow = currenthour - leftBoundaryHour;
                 if (positionInWindow >= 0) {
-                    int currentValue = query2_items.get(position).getSlidingWindow().get(positionInWindow);
-                    query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                    int currentValue = query3_items.get(position).getSlidingWindow().get(positionInWindow);
+                    query3_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
                 }
             }
             else if (currentDay >= leftBoundaryDay + 1){
-                int positionInWindow = currenthour  + 24 - leftBoundaryHour; //TODO-------------rivedi bene se è 23 o 24
+                int positionInWindow = currenthour  + 24 - leftBoundaryHour;
                 if (positionInWindow >= 0) {
-                    int currentValue = query2_items.get(position).getSlidingWindow().get(positionInWindow);
-                    query2_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
+                    int currentValue = query3_items.get(position).getSlidingWindow().get(positionInWindow);
+                    query3_items.get(position).getSlidingWindow().set(positionInWindow, m.getCount().intValue() + currentValue);
                 }
                 else
                     System.out.println("position in window: " + positionInWindow);
@@ -371,8 +314,8 @@ public class Monitor2 {
     private int checkIfAlreadyIn(Long post_id){
         //return the position
         int i = 0;
-        for(Query2_Item q : query2_items){
-            if (q.getPost_id().equals(post_id))
+        for(Query3_Item q : query3_items){
+            if (q.getUser_id().equals(post_id))
                 return i;
             i++;
         }
@@ -391,7 +334,7 @@ public class Monitor2 {
                 c.set(Calendar.MINUTE, 0);
                 c.set(Calendar.SECOND, 0);
 
-                BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2.csv", true));
+                BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3.csv", true));
                 StringBuilder sb = new StringBuilder();
                 sb.append(dateFormat.format(c.getTimeInMillis()));
                 for (Integer i : temp) {
@@ -410,20 +353,20 @@ public class Monitor2 {
     }
 
     private void saveDailyValues(int oldDay, int oldWeek, int oldYear){
-        query2_items.sort(Comparator.comparingInt(Query2_Item::getDailyValue).reversed());
+        query3_items.sort(Comparator.comparingInt(Query3_Item::getDailyValue).reversed());
         Integer[] temp = new Integer[20];
         int k = 0;
         int maxValue = 10;
         //prendo i primi dieci valori oppure tutti gli elementi dell'array se in numero inferiore
-        if (query2_items.size() < 10)
-            maxValue = query2_items.size();
+        if (query3_items.size() < 10)
+            maxValue = query3_items.size();
         //salvo i dieci valori in un array temporaneo insieme al loro id
         for (int i = 0; i  < maxValue; i++){
-            temp[k] = query2_items.get(i).getPost_id().intValue();
-            temp[k+1] = query2_items.get(i).getDailyValue();
+            temp[k] = query3_items.get(i).getUser_id().intValue();
+            temp[k+1] = query3_items.get(i).getDailyValue();
             k += 2;
         }
-        for (Query2_Item q : query2_items) {
+        for (Query3_Item q : query3_items) {
             q.setDailyValue(0);
         }
 
@@ -436,7 +379,7 @@ public class Monitor2 {
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2_daily.csv", true));
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3_daily.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
@@ -456,20 +399,20 @@ public class Monitor2 {
     }
 
     private void saveWeeklyValues(int oldWeek, int oldYear){
-        query2_items.sort(Comparator.comparingInt(Query2_Item::getWeekValue).reversed());
+        query3_items.sort(Comparator.comparingInt(Query3_Item::getWeekValue).reversed());
         Integer[] temp = new Integer[20];
         int k = 0;
         int maxValue = 10;
         //prendo i primi dieci valori oppure tutti gli elementi dell'array se in numero inferiore
-        if (query2_items.size() < 10)
-            maxValue = query2_items.size();
+        if (query3_items.size() < 10)
+            maxValue = query3_items.size();
         //salvo i dieci valori in un array temporaneo insieme al loro id
         for (int i = 0; i  < maxValue; i++){
-            temp[k] = query2_items.get(i).getPost_id().intValue();
-            temp[k+1] = query2_items.get(i).getWeekValue();
+            temp[k] = query3_items.get(i).getUser_id().intValue();
+            temp[k+1] = query3_items.get(i).getWeekValue();
             k += 2;
         }
-        for (Query2_Item q : query2_items) {
+        for (Query3_Item q : query3_items) {
             q.setWeekValue(0);
         }
 
@@ -482,7 +425,7 @@ public class Monitor2 {
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2_weekly.csv", true));
+            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3_weekly.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
@@ -490,47 +433,13 @@ public class Monitor2 {
                 sb.append(i);
             }
             sb.append(System.lineSeparator());
+
             br.write(sb.toString());
             br.flush();
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-
-
-
-
-    private void printBoundaries(){
-
-        System.out.println("left boundaries: ");
-        System.out.println("hour: " + leftBoundaryHour
-                + ", day: " + leftBoundaryDay
-                + ", week: " + leftBoundaryWeek
-                + ", year: " + leftBoundaryYear);
-        System.out.println("right boundaries: ");
-        System.out.println("hour: " + rightBoundaryHour
-                + ", day: " + rightBoundaryDay
-                + ", week: " + rightBoundaryWeek
-                + ", year: " + rightBoundaryYear);
-        System.out.println("OK_PACKETS: " + OK_PACKETS);
-        System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
-    }
-
-    private void printMessage(Message m){
-        System.out.println("message: " + m.getPost_commented());
-        System.out.println("hour: " + m.getHour()
-                + ", day: " + m.getDay()
-                + ", week: " + m.getWeek()
-                + ", year: " + m.getYear());
-        System.out.println("\n\n\n");
-    }
-
-    private void printWindow(String id, String window){
-        String reference = "644564";
-        if(id.equals(reference))
-            System.out.println("id: " + id + ", " + window);
     }
 
 }

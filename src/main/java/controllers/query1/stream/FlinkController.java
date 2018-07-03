@@ -45,6 +45,8 @@ public class FlinkController implements Serializable {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         DataStreamSource<String> stream = env.addSource(new FlinkKafkaConsumer011(INPUT_KAFKA_TOPIC, new SimpleStringSchema(), properties));
 
+        env.setParallelism(1);
+
 
         //System.out.println("got sources");
         DataStream<Tuple5<Integer,Integer, Date, Long, Long>> streamTuples = stream.flatMap(new Message2Tuple());
@@ -68,7 +70,8 @@ public class FlinkController implements Serializable {
                         //.window(GlobalWindows.create())
                         //.trigger(new MyTrigger())
                         .timeWindow(Time.minutes(60))
-                        .aggregate(new AverageAggregate());
+                        .aggregate(new AverageAggregate())
+                        .setParallelism(1);
 
         resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  st -> {
             Message m = new Message(0);

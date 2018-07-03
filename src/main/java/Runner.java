@@ -10,7 +10,7 @@ import controllers.query1.stream.Monitor;
 public class Runner {
 
     public static void main(String[] args) throws InterruptedException {
-        query3();
+        query1();
     }
 
     private static void query1() throws InterruptedException {
@@ -40,7 +40,7 @@ public class Runner {
         thread_query1.start();
         thread_monitor_query1.start();
         try {
-            Thread.sleep(10000);
+            Thread.sleep(20000);
             System.out.println("starting sending messages on kafka topic");
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -58,7 +58,7 @@ public class Runner {
 
         KafkaController kc = new KafkaController(2);
         FlinkControllerQuery2 query2 = new FlinkControllerQuery2();
-        //FlinkFile query2 = new FlinkFile();
+        //FlinkFile3 query2 = new FlinkFile3();
 
         Thread thread_kafka_injection = new Thread(() -> {
             try {
