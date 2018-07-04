@@ -17,6 +17,7 @@ import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -25,11 +26,6 @@ public class FlinkFile3 {
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
-    /*private static String INPUT_KAFKA_TOPIC = null;
-    private static Integer currentHour = -1;
-    private static ReentrantLock lock = new ReentrantLock();
-    private static int countToDelete = 0;*/
-
 
     public void calculateQuery3() throws Exception {
 
@@ -37,7 +33,7 @@ public class FlinkFile3 {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
-                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat");
+                env.readTextFile("/home/simone/IdeaProjects/DanielloIonita_2/query3_file.txt");
 
         SingleOutputStreamOperator<Tuple4<Date, Integer, Long, String>> streamTuples =
                 stream.flatMap(new Tokenizer());
@@ -85,6 +81,12 @@ public class FlinkFile3 {
 
         @Override
         public Tuple4<Date, Long, Long, String> getResult(Tuple4<Date, Long, Long, String> accumulator) {
+            Message m = new Message();
+            m.setTmp(String.valueOf(accumulator.f0.getTime()));
+            m.setUser_id1(accumulator.f1);
+            m.setCount(accumulator.f2);
+            m.setUser_name(accumulator.f3);
+            MonitorBatch3.getInstance().makeCheck(m);
             return accumulator;
         }
 
@@ -103,15 +105,63 @@ public class FlinkFile3 {
         private static final long serialVersionUID = 1L;
 
         @Override
-        public void flatMap(String jsonString, Collector<Tuple4<Date, Integer, Long, String>> out) {
-            ArrayList<TopUsers> recs = DataReaderQuery3.getData(jsonString);
-            Iterator irecs = recs.iterator();
+        public void flatMap(String value, Collector<Tuple4<Date, Integer, Long, String>> out) {
+            String[] bufferReading = value.split("\\|");
+            Tuple4 tp4;
+            Tuple4 tp4_2;
+            Date timestamp;
+            Integer hour;
+            String username;
+            Long user1;
+            Long user2;
 
-            while (irecs.hasNext()) {
-                TopUsers record = (TopUsers) irecs.next();
-                Tuple4 tp4 = new Tuple4<>(record.getTmp(), record.getHour(), record.getUser_id(), record.getUsername());
+            try {
 
-                out.collect(tp4);
+                if (bufferReading.length == 3){
+                    //is friendship
+                    timestamp = new SimpleDateFormat(dateFormat).parse(bufferReading[0]);
+                    Calendar c = GregorianCalendar.getInstance();
+                    c.setTime(timestamp);
+                    hour = c.get(Calendar.HOUR_OF_DAY);
+                    user1 = Long.parseLong(bufferReading[1]);
+                    user2 = Long.parseLong(bufferReading[2]);
+                    tp4 = new Tuple4<>(timestamp, hour, user1, "null");
+                    tp4_2 = new Tuple4<>(timestamp, hour, user2, "null");
+
+                    out.collect(tp4);
+                    out.collect(tp4_2);
+                }
+                else if(bufferReading.length == 7 || bufferReading.length == 6){
+                    //is comment
+                    timestamp = new SimpleDateFormat(dateFormat).parse(bufferReading[0]);
+                    Calendar c = GregorianCalendar.getInstance();
+                    c.setTime(timestamp);
+                    hour = c.get(Calendar.HOUR_OF_DAY);
+                    user1 = Long.valueOf(bufferReading[2]);
+                    username = bufferReading[4];
+                    tp4 = new Tuple4<>(timestamp, hour, user1, username);
+
+                    out.collect(tp4);
+                }
+                else if(bufferReading.length == 5){
+                    //is post
+                    timestamp = new SimpleDateFormat(dateFormat).parse(bufferReading[0]);
+                    Calendar c = GregorianCalendar.getInstance();
+                    c.setTime(timestamp);
+                    hour = c.get(Calendar.HOUR_OF_DAY);
+                    user1 = Long.valueOf(bufferReading[2]);
+                    username = bufferReading[4];
+                    tp4 = new Tuple4<>(timestamp, hour, user1, username);
+
+                    out.collect(tp4);
+                }
+                else{
+                    //error
+                    System.out.println("error");
+                }
+
+            } catch (ParseException e) {
+                e.printStackTrace();
             }
         }
     }
