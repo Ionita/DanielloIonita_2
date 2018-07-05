@@ -20,6 +20,11 @@ public class Monitor {
     private Integer week = 0;
     private Integer lifetime = 0;
 
+    private BufferedWriter br_all;
+    private BufferedWriter br_daily;
+    private BufferedWriter br_weekly;
+    private BufferedWriter br_lifetime;
+
     private Integer[] dayHours = new Integer[24];
 
     private Long right = 0L;
@@ -36,6 +41,16 @@ public class Monitor {
 
 
     public Monitor(){
+
+        try {
+            br_all = new BufferedWriter(new FileWriter("results/query_1/query1.csv", true));
+            br_daily = new BufferedWriter(new FileWriter("results/query_1/query1_daily.csv", true));
+            br_weekly = new BufferedWriter(new FileWriter("results/query_1/query1_weekly.csv", true));
+            br_lifetime = new BufferedWriter(new FileWriter("results/query_1/query1_lifetime.csv", true));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         Thread thread1 = new Thread(() -> {
             int currentTotalValue = lifetime;
             while (true) {
@@ -44,6 +59,14 @@ public class Monitor {
                     if(currentTotalValue == lifetime && lifetime != 0){
                         lifetime_query(dateFormat.format(firstTmpInAbsolute), lifetime);
                         System.exit(0);
+                        try {
+                            br_all.close();
+                            br_daily.close();
+                            br_weekly.close();
+                            br_lifetime.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                     currentTotalValue = lifetime;
                 } catch (InterruptedException e) {
@@ -139,7 +162,7 @@ public class Monitor {
     private void query1Results (String ts, Integer[] value) {
 
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1.csv", true));
+            //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(ts);
             for (Integer element: value) {
@@ -149,9 +172,9 @@ public class Monitor {
 
             sb.append(System.lineSeparator());
 
-            br.write(sb.toString());
-            br.flush();
-            br.close();
+            br_all.write(sb.toString());
+            br_all.flush();
+            //br.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -159,14 +182,14 @@ public class Monitor {
 
     private void daily_query1results(String ts, Integer day){
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_daily.csv", true));
+            //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_daily.csv", true));
             String sb = ts +
                     ", " +
                     day +
                     System.lineSeparator();
-            br.write(sb);
-            br.flush();
-            br.close();
+            br_daily.write(sb);
+            br_daily.flush();
+            //br.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -174,14 +197,14 @@ public class Monitor {
 
     private void weekly_query1results(String ts, Integer week, Date firstTmpOfTheWeek){
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_weekly.csv", true));
+            //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_weekly.csv", true));
             String sb = ts +
                     ", " +
                     week +
                     System.lineSeparator();
-            br.write(sb);
-            br.flush();
-            br.close();
+            br_weekly.write(sb);
+            br_weekly.flush();
+            //br.close();
 
             Calendar c = Calendar.getInstance();
             c.setTime(firstTmpOfTheWeek);
@@ -194,14 +217,14 @@ public class Monitor {
 
     private void lifetime_query(String ts, Integer lifetime){
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_lifetime.csv", true));
+            //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_1/query1_lifetime.csv", true));
             String sb = ts +
                     ", " +
                     lifetime +
                     System.lineSeparator();
-            br.write(sb);
-            br.flush();
-            br.close();
+            br_lifetime.write(sb);
+            br_lifetime.flush();
+            //br.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

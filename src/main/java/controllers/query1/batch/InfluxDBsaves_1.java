@@ -1,7 +1,7 @@
 package controllers.query1.batch;
 
-import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
+import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -16,7 +16,7 @@ public class InfluxDBsaves_1 {
     private static InfluxDB influxDB;
     private static BatchPoints batchPoints;
 
-    private static final String dbname = "prova";
+    private static final String dbname = "query1";
 
     public static InfluxDBsaves_1 getInstance(){
         return instance;

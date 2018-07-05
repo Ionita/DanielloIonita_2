@@ -33,7 +33,7 @@ public class FlinkFile3 {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
-                env.readTextFile("/home/simone/IdeaProjects/DanielloIonita_2/query3_file.txt");
+                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/query3_file.txt");
 
         SingleOutputStreamOperator<Tuple4<Date, Integer, Long, String>> streamTuples =
                 stream.flatMap(new Tokenizer());

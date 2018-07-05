@@ -40,6 +40,8 @@ public class FlinkFile {
         DataStreamSource<String> stream =
                 env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat");
 
+        //env.setParallelism(1);
+
         SingleOutputStreamOperator<Tuple3<Date, Integer, Long>> streamTuples =
                 stream.flatMap(new Tokenizer());
 
@@ -91,7 +93,7 @@ public class FlinkFile {
             m.setTmp(String.valueOf(accumulator.f0.getTime()));
             m.setPost_commented(accumulator.f1);
             m.setCount(accumulator.f2);
-            MonitorBatch2_light.getInstance().makeCheck(m);
+            MonitorBatch2.getInstance().makeCheck(m);
             return accumulator;
         }
 

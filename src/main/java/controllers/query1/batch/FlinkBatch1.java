@@ -46,7 +46,7 @@ public class FlinkBatch1 implements Serializable {
         DataStreamSource<String> stream =
                 env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat");
 
-        env.setParallelism(1);
+        //env.setParallelism(1);
         //System.out.println("got sources");
         DataStream<Tuple5<Integer,Integer, Date, Long, Long>> streamTuples =
                 stream.flatMap(new Tokenizer());
@@ -61,7 +61,8 @@ public class FlinkBatch1 implements Serializable {
             })
             .keyBy(1)
             .timeWindow(Time.minutes(60))
-            .aggregate(new AverageAggregate());
+            .aggregate(new AverageAggregate())
+            .setParallelism(1);
 
         env.execute("Window Traffic Data");
 

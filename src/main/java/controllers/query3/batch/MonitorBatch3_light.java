@@ -23,6 +23,10 @@ public class MonitorBatch3_light {
     private Long DISCARDED_PACKETS = 0L;
     private int emptCyclesToCloseTheApp = 1;
 
+    private BufferedWriter br_all;
+    private BufferedWriter br_daily;
+    private BufferedWriter br_weekly;
+
     private Integer leftBoundaryHour = -1;
     private Integer leftBoundaryDay;
     private Integer leftBoundaryWeek;
@@ -56,6 +60,15 @@ public class MonitorBatch3_light {
     }
 
     private MonitorBatch3_light(){
+
+        try {
+            br_all = new BufferedWriter(new FileWriter("results/query_3/query3.csv", true));
+            br_daily = new BufferedWriter(new FileWriter("results/query_3/query3_daily.csv", true));
+            br_weekly = new BufferedWriter(new FileWriter("results/query_3/query3_weekly.csv", true));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         Thread thread1 = new Thread(() -> {
             long current_ok_packets = OK_PACKETS;
             int times = 0;
@@ -79,6 +92,13 @@ public class MonitorBatch3_light {
             }
             if(OK_PACKETS != 0) {
                 System.out.println("Error of " + ((Double.valueOf(DISCARDED_PACKETS) * 100) / Double.valueOf(OK_PACKETS)) + "%");
+                try {
+                    br_all.close();
+                    br_daily.close();
+                    br_weekly.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 System.exit(0);
             }
         });
@@ -334,7 +354,7 @@ public class MonitorBatch3_light {
                 c.set(Calendar.MINUTE, 0);
                 c.set(Calendar.SECOND, 0);
 
-                BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3.csv", true));
+                //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3.csv", true));
                 StringBuilder sb = new StringBuilder();
                 sb.append(dateFormat.format(c.getTimeInMillis()));
                 for (Integer i : temp) {
@@ -343,9 +363,8 @@ public class MonitorBatch3_light {
                 }
                 sb.append(System.lineSeparator());
 
-                br.write(sb.toString());
-                br.flush();
-                br.close();
+                br_all.write(sb.toString());
+                //br.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -379,7 +398,7 @@ public class MonitorBatch3_light {
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3_daily.csv", true));
+            //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3_daily.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
@@ -388,9 +407,8 @@ public class MonitorBatch3_light {
             }
             sb.append(System.lineSeparator());
 
-            br.write(sb.toString());
-            br.flush();
-            br.close();
+            br_daily.write(sb.toString());
+            //br.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -425,7 +443,7 @@ public class MonitorBatch3_light {
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
-            BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3_weekly.csv", true));
+            //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_3/query3_weekly.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
@@ -434,9 +452,8 @@ public class MonitorBatch3_light {
             }
             sb.append(System.lineSeparator());
 
-            br.write(sb.toString());
-            br.flush();
-            br.close();
+            br_weekly.write(sb.toString());
+            //br.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
