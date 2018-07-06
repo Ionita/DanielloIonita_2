@@ -39,13 +39,15 @@ public class Monitor {
     private Date firstTmpOfTheWeek = null;
     private Date firstTmpInAbsolute = null;
 
+    private String outputDirectory;
+
 
     public Monitor(){
 
         try {
-            br_all = new BufferedWriter(new FileWriter("results/query_1/query1.csv", true));
-            br_daily = new BufferedWriter(new FileWriter("results/query_1/query1_daily.csv", true));
-            br_weekly = new BufferedWriter(new FileWriter("results/query_1/query1_weekly.csv", true));
+            br_all      = new BufferedWriter(new FileWriter("results/query_1/query1.csv", true));
+            br_daily    = new BufferedWriter(new FileWriter("results/query_1/query1_daily.csv", true));
+            br_weekly   = new BufferedWriter(new FileWriter("results/query_1/query1_weekly.csv", true));
             br_lifetime = new BufferedWriter(new FileWriter("results/query_1/query1_lifetime.csv", true));
         } catch (IOException e) {
             e.printStackTrace();

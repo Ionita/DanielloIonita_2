@@ -94,29 +94,17 @@ public class KafkaController implements Serializer {
         KafkaBenchmark.getInstance().startThread();
 
         if (type == 1){
-            //Thread thread1 = new Thread(() -> {
                 readData(filepath, 0);
-            //});
-            //thread1.start();
-            //thread1.join();
         }
         else if(type == 2){
-            //Thread thread3 = new Thread(() -> {
                 readData(filepath, 2);
-            //});
-            //thread3.start();
-            //thread3.join();
         }
         else {
-            //Thread thread2 = new Thread(() -> {
-                try {
-                    sendQuery3Data(filepath);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            //});
-            //thread2.start();
-            //thread2.join();
+            try {
+                sendQuery3Data(filepath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         KafkaBenchmark.getInstance().stopAll();
 
@@ -279,6 +267,7 @@ public class KafkaController implements Serializer {
 
     private void sendQuery3Data (String filepath) throws IOException {
 
+        System.out.println(filepath);
         int i = 0;
         String line;
         String cvsSplitBy = "\\|";
@@ -331,8 +320,6 @@ public class KafkaController implements Serializer {
                 KafkaBenchmark.getInstance().setnMessages(i);
                 i = 0;
             }
-            //System.out.println("tipo: " + m.getType() + "    message: " + m.getTmp() + "  " + m.getUser_id1());
-
         }
         KafkaBenchmark.getInstance().setnMessages(i);
 

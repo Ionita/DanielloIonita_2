@@ -9,9 +9,9 @@ public class Alphabetizer {
     public static void main(String[] args) throws Exception {
 
         createFile("totalRecords.dat");
-        appendFiles("totalRecords.dat", "/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat");
-        appendFiles("totalRecords.dat", "/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat");
-        appendFiles("totalRecords.dat", "/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/posts.dat");
+        appendFiles("totalRecords.dat", "data/comments.dat");
+        appendFiles("totalRecords.dat", "data/friendships.dat");
+        appendFiles("totalRecords.dat", "data/posts.dat");
 
         order("totalRecords.dat");
     }

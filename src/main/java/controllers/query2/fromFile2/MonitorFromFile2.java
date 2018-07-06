@@ -425,11 +425,6 @@ public class MonitorFromFile2 {
                 }
                 sb.append(System.lineSeparator());
 
-                System.out.println("\n\n\nora crasho \n\n\n");
-
-
-                System.out.println(br_all.toString());
-                System.out.println(sb.toString());
                 br_all.write(sb.toString());
 
                 br_all.flush();

@@ -84,7 +84,6 @@ public class FlinkFile {
 
         @Override
         public Tuple3<Date, Long, Long> add(Tuple3<Date, Integer, Long> value, Tuple3<Date, Long, Long> accumulator) {
-            System.out.println("adding");
             if (accumulator.f0 == null)
                 return new Tuple3<>(value.f0, value.f2, accumulator.f2 + 1);
             else if (accumulator.f0.after(value.f0))
