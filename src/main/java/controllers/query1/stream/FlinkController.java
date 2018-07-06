@@ -34,7 +34,7 @@ public class FlinkController implements Serializable {
     private Integer currentHour = -1;
     private Date accumulatorDate = null;
 
-    public void calculateAvg() throws Exception {
+    public void startComputation() throws Exception {
 
         INPUT_KAFKA_TOPIC = "query1";
         Properties properties = new Properties();
