@@ -24,25 +24,41 @@ before running each class in the main directory must be present a directory call
 Runner classes can take as input: 
 
 Query1FromFile: path_of_the_file
+
   for example /user/x/data/friendship.dat
+  
 Query2FromFile: --input path_of_the_file --output path_of_result_directory
+
   for example --input /user/x/data/comments.dat --output /user/x/data/results
+  
 Query1FromFile: path_of_the_file
+
   for example /user/x/data/query3.txt
+  
 
 Query1Flink: none
+
 Query2Flink: none
+
 Query3Flink: none
 
 Query1Kafka: path_of_the_file
+
   for example /user/x/data/friendship.dat
+  
 Query2Kafka: path_of_the_file
+
   for example /user/x/data/comments.dat
+  
 Query3Kafka: path_of_the_file
+
   for example /user/x/data/query3.txt
   
+  
 Query1Monitor: none
+
 Query2Monitor: none
+
 Query3Monitor: none
   
 
