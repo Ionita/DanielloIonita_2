@@ -28,9 +28,9 @@ public class MonitorFromFile2 {
     private Integer leftBoundaryWeek;
     private Integer leftBoundaryYear;
 
-    private BufferedWriter br_all;
-    private BufferedWriter br_daily;
-    private BufferedWriter br_weekly;
+/*    private static BufferedWriter br_all;
+    private static BufferedWriter br_daily;
+    private static BufferedWriter br_weekly;*/
 
     private Integer rightBoundaryHour;
     private Integer rightBoundaryDay;
@@ -41,6 +41,9 @@ public class MonitorFromFile2 {
 
     private Long startTimer;
     private Long endTimer;
+
+    private String outputDirectory;
+
 
     /**
      * arriva un dato.
@@ -71,14 +74,6 @@ public class MonitorFromFile2 {
 
     private MonitorFromFile2(){
 
-        try {
-            br_all = new BufferedWriter(new FileWriter("results/query_2/query2.csv", true));
-            br_daily = new BufferedWriter(new FileWriter("results/query_2/query2_daily.csv", true));
-            br_weekly = new BufferedWriter(new FileWriter("results/query_2/query2_weekly.csv", true));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         Thread thread1 = new Thread(() -> {
             long current_ok_packets = OK_PACKETS;
             int times = 0;
@@ -105,13 +100,13 @@ public class MonitorFromFile2 {
                 slideToRight(slidingWindowSize, leftBoundaryHour, leftBoundaryDay, leftBoundaryWeek, leftBoundaryYear);
                 endTimer = System.currentTimeMillis();
                 System.out.println("Time spent query 2: " + (endTimer-startTimer)/1000 + " seconds");
-                try {
+/*                try {
                     br_all.close();
                     br_daily.close();
                     br_weekly.close();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }
+                }*/
                 System.exit(0);
             }
         });
@@ -417,7 +412,7 @@ public class MonitorFromFile2 {
                 c.set(Calendar.MINUTE, 0);
                 c.set(Calendar.SECOND, 0);
 
-                //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2.csv", true));
+                BufferedWriter br_all = new BufferedWriter(new FileWriter(outputDirectory + "/query2.csv", true));
                 StringBuilder sb = new StringBuilder();
 
                 //InfluxDBsaves_2.getInstance().savePointOnDB("hours", c.getTime(), temp);
@@ -430,11 +425,19 @@ public class MonitorFromFile2 {
                 }
                 sb.append(System.lineSeparator());
 
+                System.out.println("\n\n\nora crasho \n\n\n");
+
+
+                System.out.println(br_all.toString());
+                System.out.println(sb.toString());
                 br_all.write(sb.toString());
-                //br.flush();
-                //br.close();
+
+                br_all.flush();
+                br_all.close();
+
             } catch (IOException e) {
                 e.printStackTrace();
+                System.exit(-1);
             }
         }
     }
@@ -466,7 +469,7 @@ public class MonitorFromFile2 {
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
-            //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2_daily.csv", true));
+            BufferedWriter br_daily = new BufferedWriter(new FileWriter(outputDirectory + "/query2_daily.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
@@ -476,8 +479,8 @@ public class MonitorFromFile2 {
             sb.append(System.lineSeparator());
 
             br_daily.write(sb.toString());
-            //br.flush();
-            //br.close();
+            br_daily.flush();
+            br_daily.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -512,7 +515,7 @@ public class MonitorFromFile2 {
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
 
-            //BufferedWriter br = new BufferedWriter(new FileWriter("results/query_2/query2_weekly.csv", true));
+            BufferedWriter br_weekly = new BufferedWriter(new FileWriter(outputDirectory + "/query2_weekly.csv", true));
             StringBuilder sb = new StringBuilder();
             sb.append(dateFormat.format(c.getTimeInMillis()));
             for(Integer i: temp){
@@ -522,11 +525,14 @@ public class MonitorFromFile2 {
             sb.append(System.lineSeparator());
 
             br_weekly.write(sb.toString());
-            //br.flush();
-            //br.close();
+            br_weekly.flush();
+            br_weekly.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public void setOutputFile(String output) {
+        this.outputDirectory = output;
+    }
 }

@@ -32,6 +32,7 @@ public class MonitorFromFile2_light {
     private BufferedWriter br_daily;
     private BufferedWriter br_weekly;
 
+    private String outputDirectory;
     /**
      * arriva un dato.
      * se non è settato nulla dobbiamo settare l'ora iniziale della finestra.
@@ -60,14 +61,6 @@ public class MonitorFromFile2_light {
     }
 
     private MonitorFromFile2_light(){
-
-        try {
-            br_all = new BufferedWriter(new FileWriter("results/query_2/query2.csv", true));
-            br_daily = new BufferedWriter(new FileWriter("results/query_2/query2_daily.csv", true));
-            br_weekly = new BufferedWriter(new FileWriter("results/query_2/query2_weekly.csv", true));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         Thread thread1 = new Thread(() -> {
             long current_ok_packets = OK_PACKETS;
@@ -457,6 +450,18 @@ public class MonitorFromFile2_light {
             br_weekly.write(sb.toString());
             //br.flush();
             //br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void setOutputFile(String output) {
+        this.outputDirectory = output;
+        try {
+            br_all =    new BufferedWriter(new FileWriter(outputDirectory + "/query2.csv", true));
+            br_daily =  new BufferedWriter(new FileWriter(outputDirectory + "/query2_daily.csv", true));
+            br_weekly = new BufferedWriter(new FileWriter(outputDirectory + "/query2_weekly.csv", true));
         } catch (IOException e) {
             e.printStackTrace();
         }

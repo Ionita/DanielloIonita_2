@@ -3,12 +3,17 @@ package controllers.query2.fromFile2;
 import entities.Message;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.io.FilePathFilter;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.java.io.TextInputFormat;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks;
+import org.apache.flink.streaming.api.functions.source.FileProcessingMode;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
@@ -24,15 +29,22 @@ public class FlinkFile {
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
     private String filepath;
+    private ParameterTool parameter;
 
-    public FlinkFile(String arg) {
-        filepath = arg;
+    public FlinkFile(ParameterTool parameter) {
+        this.parameter = parameter;
+        filepath = parameter.get("input");
+        MonitorFromFile2.getInstance().setOutputFile(parameter.get("output"));
+        System.out.println("flink instanciated");
     }
 
 
     public void calculateQuery2() throws Exception {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+
+        env.getConfig().setGlobalJobParameters(parameter);
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
@@ -58,6 +70,7 @@ public class FlinkFile {
             .timeWindow(Time.hours(1))
             .aggregate(new AverageAggregate())
             .setParallelism(1);
+
         env.execute("Query 2 Real-Time Classification");
 
     }
@@ -71,6 +84,7 @@ public class FlinkFile {
 
         @Override
         public Tuple3<Date, Long, Long> add(Tuple3<Date, Integer, Long> value, Tuple3<Date, Long, Long> accumulator) {
+            System.out.println("adding");
             if (accumulator.f0 == null)
                 return new Tuple3<>(value.f0, value.f2, accumulator.f2 + 1);
             else if (accumulator.f0.after(value.f0))
