@@ -1,12 +1,8 @@
 package controllers.query3.batch;
 
-import controllers.query2.stream_batch.MonitorBatch2_light;
-import controllers.query3.stream.DataReaderQuery3;
 import entities.Message;
-import entities.TopUsers;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -19,12 +15,19 @@ import org.apache.flink.util.Collector;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class FlinkFile3 {
 
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    private String filepath;
+
+    public FlinkFile3(String arg) {
+        filepath = arg;
+    }
 
 
     public void calculateQuery3() throws Exception {
@@ -33,13 +36,12 @@ public class FlinkFile3 {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
-                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/query3_file.txt");
+                env.readTextFile(filepath);
 
         SingleOutputStreamOperator<Tuple4<Date, Integer, Long, String>> streamTuples =
                 stream.flatMap(new Tokenizer());
 
 
-        //SingleOutputStreamOperator<Tuple4<Date, Long, Long, String>> resultStream =
         streamTuples
             .assignTimestampsAndWatermarks(new AssignerWithPunctuatedWatermarks<Tuple4<Date, Integer, Long, String>>() {
                 @Override

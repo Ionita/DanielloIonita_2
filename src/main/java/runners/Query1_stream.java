@@ -7,17 +7,19 @@ import dataInjection.KafkaController;
 public class Query1_stream {
 
     public static void main(String[] args) {
-        query1();
+        if(args.length == 1)
+            query1(args[0]);
+
     }
 
-    private static void query1() {
+    private static void query1(String arg) {
         FlinkController fc = new FlinkController();
         KafkaController kc = new KafkaController(1);
 
 
         Thread thread_kafka_injection = new Thread(() -> {
             try {
-                kc.kafkaStart();
+                kc.kafkaStart(arg);
             } catch (Exception e) {
                 e.printStackTrace();
             }

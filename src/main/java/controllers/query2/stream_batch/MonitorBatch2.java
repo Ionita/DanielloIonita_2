@@ -39,6 +39,9 @@ public class MonitorBatch2{
 
     private final Integer slidingWindowSize = 2;
 
+    private Long startTimer;
+    private Long endTimer;
+
     /**
      * arriva un dato.
      * se non è settato nulla dobbiamo settare l'ora iniziale della finestra.
@@ -100,6 +103,8 @@ public class MonitorBatch2{
             if(OK_PACKETS != 0) {
                 System.out.println("Error of " + ((Double.valueOf(DISCARDED_PACKETS) * 100) / Double.valueOf(OK_PACKETS)) + "%");
                 slideToRight(slidingWindowSize, leftBoundaryHour, leftBoundaryDay, leftBoundaryWeek, leftBoundaryYear);
+                endTimer = System.currentTimeMillis();
+                System.out.println("Time spent query 2: " + (endTimer-startTimer)/1000 + " seconds");
                 try {
                     br_all.close();
                     br_daily.close();
@@ -160,6 +165,7 @@ public class MonitorBatch2{
 
     private void checkFirstOne (Message m) {
         if (leftBoundaryHour == -1) {
+            startTimer = System.currentTimeMillis();
             initialization();
             if (slidingWindowSize > 24){
                 System.out.println("errore > 24");

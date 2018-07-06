@@ -7,10 +7,11 @@ import dataInjection.KafkaController;
 public class Query2_stream {
 
     public static void main(String[] args) {
-        query2();
+        if(args.length == 1)
+            query2(args[0]);
     }
 
-    private static void query2() {
+    private static void query2(String arg) {
 
 
         KafkaController kc = new KafkaController(2);
@@ -18,7 +19,7 @@ public class Query2_stream {
 
         Thread thread_kafka_injection = new Thread(() -> {
             try {
-                kc.kafkaStart();
+                kc.kafkaStart(arg);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -33,6 +34,8 @@ public class Query2_stream {
 
 
         Thread thread_monitor_query2 = new Thread(Monitor2::new);
+
+
         thread_query2.start();
         thread_monitor_query2.start();
         try {

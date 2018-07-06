@@ -208,7 +208,6 @@ public class Monitor {
 
             Calendar c = Calendar.getInstance();
             c.setTime(firstTmpOfTheWeek);
-            System.out.println("week: " + c.get(Calendar.WEEK_OF_YEAR) + ", timestamp: " + ts + ", value: " + week);
 
         } catch (IOException e) {
             e.printStackTrace();

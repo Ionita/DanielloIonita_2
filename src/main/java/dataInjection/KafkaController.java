@@ -88,21 +88,21 @@ public class KafkaController implements Serializer {
 
     }
 
-    public void kafkaStart() throws InterruptedException {
+    public void kafkaStart(String filepath) throws InterruptedException {
 
         KafkaBenchmark.getInstance().startTime();
         KafkaBenchmark.getInstance().startThread();
 
         if (type == 1){
             //Thread thread1 = new Thread(() -> {
-                readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat", 0);
+                readData(filepath, 0);
             //});
             //thread1.start();
             //thread1.join();
         }
         else if(type == 2){
             //Thread thread3 = new Thread(() -> {
-                readData("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/comments.dat", 2);
+                readData(filepath, 2);
             //});
             //thread3.start();
             //thread3.join();
@@ -110,7 +110,7 @@ public class KafkaController implements Serializer {
         else {
             //Thread thread2 = new Thread(() -> {
                 try {
-                    sendQuery3Data("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/query3_file.txt");
+                    sendQuery3Data(filepath);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -167,13 +167,6 @@ public class KafkaController implements Serializer {
 
                     i++;
 
-                    //CANCELLA
-/*                    try {
-                        Thread.sleep(15);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }*/
-                    //CANCELLA
                     this.sendMessage(m, topicToSend);
                     if (i%1000 == 0) {
                         KafkaBenchmark.getInstance().setBytePerMessage(toByteArray(m).length);
@@ -286,6 +279,7 @@ public class KafkaController implements Serializer {
 
     private void sendQuery3Data (String filepath) throws IOException {
 
+        int i = 0;
         String line;
         String cvsSplitBy = "\\|";
 
@@ -328,10 +322,19 @@ public class KafkaController implements Serializer {
                 }
 
             }
-            //System.out.println("tipo: " + m.getType() + "    message: " + m.getTmp() + "  " + m.getUser_id1());
+
+            i++;
+
             this.sendMessage(m, "query3");
+            if (i%1000 == 0) {
+                KafkaBenchmark.getInstance().setBytePerMessage(toByteArray(m).length);
+                KafkaBenchmark.getInstance().setnMessages(i);
+                i = 0;
+            }
+            //System.out.println("tipo: " + m.getType() + "    message: " + m.getTmp() + "  " + m.getUser_id1());
 
         }
+        KafkaBenchmark.getInstance().setnMessages(i);
 
     }
 }

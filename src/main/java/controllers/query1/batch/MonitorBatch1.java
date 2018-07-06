@@ -5,6 +5,7 @@ import entities.Message;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Time;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -21,6 +22,8 @@ class MonitorBatch1 {
     private BufferedWriter br_weekly;
     private BufferedWriter br_lifetime;
 
+    private Long startTimer;
+    private Long endTimer;
 
     private Integer hour = 0;
     private Integer day = 0;
@@ -59,9 +62,11 @@ class MonitorBatch1 {
             int currentTotalValue = lifetime;
             while (true) {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(5000);
                     if(currentTotalValue == lifetime && lifetime != 0){
                         lifetime_query(dateFormat.format(firstTmpInAbsolute), lifetime);
+                        endTimer = System.currentTimeMillis();
+                        System.out.println("Time spent query 1: " + (endTimer-startTimer)/1000 + " seconds");
                         try {
                             br_all.close();
                             br_daily.close();
@@ -70,7 +75,6 @@ class MonitorBatch1 {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-
                         System.exit(0);
                     }
                     currentTotalValue = lifetime;
@@ -97,6 +101,7 @@ class MonitorBatch1 {
             firstTmpInAbsolute = new Date(Long.parseLong(m.getTmp()));
 
         if (chour == -1){
+            startTimer = System.currentTimeMillis();
             chour = m.getHour();
             cday = m.getDay();
             cweek = m.getWeek();
@@ -139,7 +144,7 @@ class MonitorBatch1 {
             chour = m.getHour();
         }
         if (type > 1) {
-            InfluxDBsaves_1.getInstance().savePointOnDB("hours", firstTmpOfTheDay, dayHours);
+            //InfluxDBsaves_1.getInstance().savePointOnDB("hours", firstTmpOfTheDay, dayHours);
             query1Results(dateFormat.format(firstTmpOfTheDay), dayHours);
             for(int i = 0; i<24; i++)
                 dayHours[i] = 0;

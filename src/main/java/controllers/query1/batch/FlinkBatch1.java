@@ -32,6 +32,11 @@ public class FlinkBatch1 implements Serializable {
 
     //private static String INPUT_KAFKA_TOPIC = null;
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    private String filepath;
+
+    public FlinkBatch1(String arg) {
+        filepath = arg;
+    }
 
 /*
     private Integer currentHour = -1;
@@ -44,7 +49,7 @@ public class FlinkBatch1 implements Serializable {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> stream =
-                env.readTextFile("/Users/mariusdragosionita/Documents/workspace/DanielloIonita_2/data/friendships.dat");
+                env.readTextFile(filepath);
 
         //env.setParallelism(1);
         //System.out.println("got sources");

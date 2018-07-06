@@ -6,6 +6,7 @@ import entities.Message;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.streaming.api.TimeCharacteristic;
@@ -13,7 +14,9 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks;
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
+import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.triggers.Trigger;
 import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
@@ -23,10 +26,7 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
 import org.apache.flink.util.Collector;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Properties;
+import java.util.*;
 
 public class FlinkController implements Serializable {
 
@@ -40,38 +40,32 @@ public class FlinkController implements Serializable {
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "localhost:9092");
         properties.setProperty("zookeeper.connect", "localhost:2181");
-        properties.setProperty("group.id", INPUT_KAFKA_TOPIC);
+        properties.setProperty("group.id", UUID.randomUUID().toString());
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
         DataStreamSource<String> stream = env.addSource(new FlinkKafkaConsumer011(INPUT_KAFKA_TOPIC, new SimpleStringSchema(), properties));
-
-        env.setParallelism(1);
-
 
         //System.out.println("got sources");
         DataStream<Tuple5<Integer,Integer, Date, Long, Long>> streamTuples = stream.flatMap(new Message2Tuple());
 
-/*        SingleOutputStreamOperator<Tuple4<Integer, Integer, Date, Long>> resultStream =
-                streamTuples
-                .keyBy(1)
-                .window(GlobalWindows.create())
-                .trigger(new MyTrigger())
-                .aggregate(new AverageAggregate());*/
-
         SingleOutputStreamOperator<Tuple4<Integer, Integer, Date, Long>> resultStream =
-                streamTuples
-                        .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<Tuple5<Integer,Integer, Date, Long, Long>>(Time.hours(23)) {
+            streamTuples
+                    .assignTimestampsAndWatermarks(new AssignerWithPunctuatedWatermarks<Tuple5<Integer,Integer, Date, Long, Long>>() {
                             @Override
-                            public long extractTimestamp(Tuple5<Integer,Integer, Date, Long, Long> element) {
+                            public long extractTimestamp(Tuple5<Integer,Integer, Date, Long, Long> element, long l) {
                                 return element.f2.getTime();
                             }
+
+                            @Override
+                            public Watermark checkAndGetNextWatermark(Tuple5<Integer,Integer, Date, Long, Long> element, long l) {
+                                return new Watermark(element.f2.getTime() - 1);
+                            }
                         })
-                        .keyBy(1)
-                        //.window(GlobalWindows.create())
-                        //.trigger(new MyTrigger())
-                        .timeWindow(Time.minutes(60))
-                        .aggregate(new AverageAggregate())
-                        .setParallelism(1);
+                    .keyBy(1)
+                    .timeWindow(Time.minutes(60))
+                    .aggregate(new AverageAggregate());
 
         resultStream.addSink(new FlinkKafkaProducer011<>("localhost:9092", "monitor",  st -> {
             Message m = new Message(0);

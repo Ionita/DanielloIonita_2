@@ -43,6 +43,9 @@ public class MonitorBatch3 {
     private Integer rightBoundaryWeek;
     private Integer rightBoundaryYear;
 
+    private Long startTimer;
+    private Long endTimer;
+
     private final Integer slidingWindowSize = 2;
 
     /**
@@ -82,7 +85,7 @@ public class MonitorBatch3 {
             int times = 0;
             while (true) {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(5000);
                     System.out.println("OK_PACKETS: " + OK_PACKETS);
                     System.out.println("DISCARDED_PACKETS: " + DISCARDED_PACKETS);
                     if (OK_PACKETS == current_ok_packets)
@@ -101,6 +104,8 @@ public class MonitorBatch3 {
             if (OK_PACKETS != 0) {
                 System.out.println("Error of " + ((Double.valueOf(DISCARDED_PACKETS) * 100) / Double.valueOf(OK_PACKETS)) + "%");
                 slideToRight(slidingWindowSize, leftBoundaryHour, leftBoundaryDay, leftBoundaryWeek, leftBoundaryYear);
+                endTimer = System.currentTimeMillis();
+                System.out.println("Time spent query 3: " + (endTimer-startTimer)/1000 + " seconds");
                 try {
                     br_all.close();
                     br_daily.close();
@@ -161,6 +166,7 @@ public class MonitorBatch3 {
 
     private void checkFirstOne(Message m) {
         if (leftBoundaryHour == -1) {
+            startTimer = System.currentTimeMillis();
             initialization();
             if (slidingWindowSize > 24) {
                 System.out.println("errore > 24");
