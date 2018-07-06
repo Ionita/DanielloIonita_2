@@ -21,6 +21,8 @@
         <logback.version>1.0.7</logback.version>
         <scala.version>2.11.12</scala.version>
 
+        <mainClass>runners.query_3.Query_3_Monitor</mainClass>
+
     </properties>
 
     <dependencies>
@@ -320,7 +322,7 @@
                                 <!-- add Main-Class to manifest file -->
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>runners.query_2.Query2_fromFile</mainClass>
+                                    <mainClass>${mainClass}</mainClass>
                                 </transformer>
                             </transformers>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
@@ -415,7 +417,7 @@
                     <configuration>
                         <archive>
                             <manifest>
-                                <mainClass>runners.query_2.Query2_fromFile</mainClass>
+                                <mainClass>${mainClass}</mainClass>
                             </manifest>
                         </archive>
                         <descriptorRefs>
@@ -444,7 +446,7 @@
                                 <addClasspath>true</addClasspath>
                                 <classpathPrefix>libs/</classpathPrefix>
                                 <mainClass>
-                                    runners.query_2.Query2_fromFile
+                                    ${mainClass}
                                 </mainClass>
                             </manifest>
                         </archive>
